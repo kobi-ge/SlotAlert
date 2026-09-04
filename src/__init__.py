@@ -1,0 +1,1 @@
+"""SlotAlert (תור פנוי) package."""

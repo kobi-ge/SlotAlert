@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SlotAlert (תור פנוי) | ממלאים תורים שהתבטלו בלחיצת וואטסאפ</title>
+  <meta name="description" content="ממלאים תורים שהתבטלו ברגע האחרון בלחיצת וואטסאפ אחת בלי להתקשר לאף אחד. מערכת חכמה לניהול רשימת המתנה ופרסום תורים אוטומטי.">
+  <meta name="theme-color" content="#090d16">
+  <link rel="stylesheet" href="/static/landing.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <a href="/" class="nav-brand">
+        <div class="brand-icon">⚡</div>
+        <span>SlotAlert <span style="font-size: 0.9rem; font-weight: 500; color: var(--accent-green-light);">(תור פנוי)</span></span>
+      </a>
+      <div class="nav-links" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <a href="#how-it-works" class="btn btn-ghost" style="display: none; @media(min-width: 768px){display: inline-flex;}">איך זה עובד?</a>
+        <button type="button" id="openLoginModalBtn" class="btn btn-outline">כניסה לעסק קיים</button>
+        <a href="#onboarding" class="btn btn-primary">הצטרפות לעסקים</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="badge">
+        <span class="pulse-dot"></span>
+        <span>מערכת חכמה לביטולי רגע אחרון</span>
+      </div>
+
+      <h1 class="hero-title">
+        ממלאים תורים שהתבטלו ברגע האחרון<br>
+        <span class="gradient-text">בלחיצת וואטסאפ אחת בלי להתקשר לאף אחד.</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        לקוחות נרשמים לרשימת ההמתנה שלך בקישור ייעודי. כשיש ביטול, שולחים התראת WhatsApp אישית לכל הממתינים הרלוונטיים — והראשון שלוחץ תופס את התור. אפס שיחות טלפון, אפס אובר-בוקינג.
+      </p>
+
+      <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+        <a href="#onboarding" class="btn btn-primary btn-lg">
+          <span>פתח חשבון בחינם תוך 60 שניות</span>
+          <span>⚡</span>
+        </a>
+        <a href="#calculator" class="btn btn-ghost btn-lg">
+          <span>מחשבון אובדן הכנסות</span>
+          <span>📊</span>
+        </a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-val">0</span>
+          <span class="stat-label">אובר-בוקינג (נעילה כפולה מובטחת)</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-val">100%</span>
+          <span class="stat-label">הודעות WhatsApp ישירות</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-val">~30 שניות</span>
+          <span class="stat-label">זמן ממוצע למילוי תור פנוי</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-val">0 שיחות</span>
+          <span class="stat-label">ללא טלפונים מיותרים בלוח לחוץ</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="steps-section" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">איך המערכת עובדת?</h2>
+        <p class="section-desc">4 צעדים פשוטים שהופכים ביטולים פתאומיים להכנסה מובטחת</p>
+      </div>
+
+      <div class="steps-container">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-title">רישום ממתינים</div>
+          <p class="step-desc">הלקוחות שלך נרשמים לדף המתנה ייעודי לעסק שלך, ובוחרים את הימים, השעות והטיפולים המועדפים עליהם.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-title">נוצר ביטול פתאומי</div>
+          <p class="step-desc">לקוח ביטל תור להיום אחה"צ? פותחים את הדשבורד ובלחיצה אחת מפרסמים את התור שהתפנה (עם אפשרות להנחה או מחיר מיוחד).</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-title">שיגור בוואטסאפ</div>
+          <p class="step-desc">המערכת מאתרת ברקע את כל הלקוחות המתאימים ושולחת להם התראה אישית ישירות לוואטסאפ עם כפתור תפיסה.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <div class="step-title">כל הקודם זוכה!</div>
+          <p class="step-desc">הלקוח הראשון שלוחץ נועל את התור ברמת מסד הנתונים. בעל העסק והלקוח מקבלים אישור מיידי, והיומן מלא שוב!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Revenue Loss Calculator -->
+  <section class="container" id="calculator">
+    <div class="calc-card">
+      <div class="section-header" style="margin-bottom: 24px;">
+        <h2 class="section-title" style="font-size: 1.9rem;">כמה כסף אתם מפסידים בכל חודש על ביטולים?</h2>
+        <p class="section-desc">הזיזו את הסליידרים כדי לגלות את הפוטנציאל שחוזר אליכם לקופה עם SlotAlert</p>
+      </div>
+
+      <div class="calc-grid">
+        <div class="calc-controls">
+          <div class="slider-group">
+            <label>
+              <span>מספר ביטולים בשבוע:</span>
+              <span id="cancellationsVal" style="color: var(--accent-green-light); font-weight: 800;">3 ביטולים</span>
+            </label>
+            <input type="range" id="cancellationsSlider" min="1" max="15" value="3" step="1">
+          </div>
+
+          <div class="slider-group">
+            <label>
+              <span>מחיר ממוצע לטיפול / תור:</span>
+              <span id="priceVal" style="color: var(--accent-green-light); font-weight: 800;">₪250</span>
+            </label>
+            <input type="range" id="priceSlider" min="50" max="1500" value="250" step="25">
+          </div>
+        </div>
+
+        <div class="calc-result-box">
+          <div class="calc-result-desc">סכום משוער שהמערכת תציל עבורך בחודש:</div>
+          <div class="calc-result-amount" id="calcMonthlyResult">₪3,250</div>
+          <div class="calc-result-desc">שהם כ- <strong id="calcYearlyResult" style="color: #fff;">₪39,000</strong> בשנה שלמה!</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Features -->
+  <section class="features-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">למה עסקים בוחרים ב-SlotAlert?</h2>
+        <p class="section-desc">כל מה שדרוש כדי לנהל יומן עמוס ומלא ללא כאב ראש</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3 class="feature-title">נעילה אטומית - אפס כפילויות</h3>
+          <p class="feature-text">ארכיטקטורת Concurrency מתקדמת (PostgreSQL + Redis Lock) מבטיחה שאף פעם שני לקוחות לא יוכלו לקבל את אותו התור.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3 class="feature-title">מנגנון הגנת ספאם (Spam Guard)</h3>
+          <p class="feature-text">הגבלה חכמה של מקסימום 2 התראות ב-24 שעות לכל לקוח, כך שהלקוחות שלכם נשארים מרוצים וללא תחושת הצפה.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3 class="feature-title">תמיכה בשירותים מותאמים אישית</h3>
+          <p class="feature-text">פרסום תור עם הנחת רגע אחרון? או שירות מיוחד שלא בקטלוג? שינוי שם ומחיר בקלות מתוך מודאל הפרסום המהיר.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3 class="feature-title">עמוד הרשמה ממותג ללקוחות</h3>
+          <p class="feature-text">קישור אישי (למשל: /b/clinic-dana) שניתן לשים בביו באינסטגרם, בטיקטוק או לשלוח בוואטסאפ ללקוחות ממתינים.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <h3 class="feature-title">וואטסאפ רשמי (Cloud API)</h3>
+          <p class="feature-text">משלוח דרך תשתית WhatsApp Cloud API עם תבניות אינטראקטיביות, קישורי תפיסה בלחיצה ואפשרות ביטול רישום נוחה.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3 class="feature-title">דשבורד חי ועדכני</h3>
+          <p class="feature-text">צפייה בתורים האחרונים שנתפסו, ניהול רשימת הממתינים ותצוגה מקדימה של כמות המועמדים בזמן אמת לפני כל שיגור.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Self-Serve Onboarding Section -->
+  <section class="onboarding-section" id="onboarding">
+    <div class="container" style="max-width: 820px;">
+      <div class="onboarding-card">
+        <div class="section-header" style="margin-bottom: 28px;">
+          <div class="badge">הרשמה עצמית מיידית</div>
+          <h2 class="section-title">הצטרפו ל-SlotAlert עכשיו</h2>
+          <p class="section-desc">הזינו את פרטי העסק והשירותים — ותקבלו גישה מיידית לדשבורד הניהול שלכם</p>
+        </div>
+
+        <div id="onboardingAlert" class="alert-box"></div>
+
+        <form id="onboardingForm" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="bizName">
+                <span class="req">*</span> שם העסק / הקליניקה
+              </label>
+              <input type="text" id="bizName" class="input-field" placeholder="למשל: קליניקת שירן לאסתטיקה" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="bizPhone">
+                <span class="req">*</span> מספר טלפון נייד (וואטסאפ)
+              </label>
+              <input type="tel" id="bizPhone" class="input-field" placeholder="למשל: 050-1234567" required>
+              <div class="input-hint">למספר זה יישלחו הודעות ניהול ואישורי תפיסה</div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="bizType">
+                <span class="req">*</span> תחום פעילות
+              </label>
+              <select id="bizType" class="select-field">
+                <option value="clinic">קליניקה לאסתטיקה / רפואה משלימה</option>
+                <option value="salon">מספרה / עיצוב שיער</option>
+                <option value="beauty">קוסמטיקה, ציפורניים וגבות</option>
+                <option value="massage">עיסויים וספא</option>
+                <option value="fitness">סטודיו לאימונים ופילאטיס</option>
+                <option value="other">אחר</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="bizSlug">
+                כתובת אישית (Slug - אופציונלי)
+              </label>
+              <input type="text" id="bizSlug" class="input-field" placeholder="למשל: shiran-clinic">
+              <div class="input-hint" id="slugPreviewHint">כתובת הדף: /b/shiran-clinic</div>
+            </div>
+          </div>
+
+          <!-- Dynamic Service Builder -->
+          <div class="services-builder">
+            <div class="builder-header">
+              <div>
+                <div class="builder-title">
+                  <span>✨ שירותי העסק</span>
+                  <span style="font-size: 0.8rem; font-weight: normal; color: var(--accent-green-light);">(לפחות שירות אחד)</span>
+                </div>
+                <div class="builder-desc">הוסיפו את הטיפולים שהעסק שלכם מציע. לקוחות יוכלו לבחור אילו שירותים מעניינים אותם.</div>
+              </div>
+            </div>
+
+            <div id="servicesContainer">
+              <!-- Initial default service row -->
+              <div class="service-row">
+                <div class="service-col" style="position: relative;">
+                  <input type="text" class="input-field service-name-input" placeholder="שם השירות (למשל: טיפול פנים עמוק)" value="טיפול פנים קלאסי">
+                </div>
+                <div class="service-col" style="position: relative;">
+                  <input type="number" class="input-field service-duration-input" placeholder="משך (דקות)" value="60" min="5" max="480">
+                </div>
+                <div class="service-col" style="position: relative;">
+                  <input type="number" class="input-field service-price-input" placeholder="מחיר ב-₪" value="250" min="0" step="1">
+                </div>
+                <button type="button" class="btn-remove-row" title="מחק שירות" style="visibility: hidden;">✕</button>
+              </div>
+            </div>
+
+            <div style="margin-top: 14px;">
+              <button type="button" id="addServiceBtn" class="btn-add-service">
+                <span>+</span>
+                <span>הוסף שירות נוסף</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="submitOnboardingBtn" class="btn-submit-onboarding">
+              <span id="btnText">הקמת העסק וכניסה לדשבורד 🚀</span>
+              <span id="btnSpinner" style="display: none;">⏳ מכין את המערכת...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="faq-section">
+    <div class="container" style="max-width: 780px;">
+      <div class="section-header">
+        <h2 class="section-title">שאלות נפוצות</h2>
+        <p class="section-desc">כל מה שרציתם לדעת על הפתרון</p>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>מה קורה אם שני לקוחות לוחצים על כפתור תפיסת התור באותו הזמן?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          המערכת משתמשת בנעילה אטומית ברמת שרת הנתונים (Redis Distributed Lock + מסד הנתונים PostgreSQL). הראשון שלוחץ תופס את התור, והלקוח השני יקבל מיידית הודעה ידידותית שהתור כבר נתפס על ידי לקוח אחר. אין שום סיכוי לאובר-בוקינג!
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>האם אני חייב להתקין אפליקציה?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          לא! המערכת עובדת כאפליקציית Web מודרנית (PWA) הנגישה ישירות מהדפדפן בסמארטפון או במחשב. גם הלקוחות שלך אינם צריכים להוריד שום אפליקציה — הכל קורה ב-WhatsApp הטבעי שלהם.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>האם אוכל להציע מחיר מוזל לתור של הרגע האחרון?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          בהחלט! בעת פרסום תור בדשבורד ניתן לעדכן את המחיר למחיר מבצע או להזין שירות בהתאמה אישית מלאה. המחיר והשירות יוצגו ישירות בהודעת הוואטסאפ ללקוחות.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>© 2026 SlotAlert (תור פנוי) — מערכת SaaS לניהול רשימות המתנה ומילוי תורים אוטומטי.</p>
+    </div>
+  </footer>
+
+  <!-- Business Login Modal (2-Step WhatsApp OTP) -->
+  <div class="modal-overlay" id="businessLoginModal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h2 class="modal-title" id="loginModalTitle">כניסה לעסק קיים 🔐</h2>
+        <button type="button" class="btn-close" id="closeLoginModalBtn" aria-label="סגור">✕</button>
+      </div>
+
+      <!-- Step 1: Phone Number -->
+      <div id="loginStepPhone">
+        <p style="color: var(--text-secondary); font-size: 0.92rem; margin-bottom: 18px; line-height: 1.5;">
+          הזינו את מספר הנייד של העסק ונשלח לכם קוד אימות חד-פעמי בוואטסאפ:
+        </p>
+
+        <form id="loginPhoneForm" novalidate>
+          <div class="form-group" style="margin-bottom: 18px; position: relative;">
+            <label class="form-label" for="loginPhone">
+              <span class="req">*</span> הזינו את מספר הנייד של העסק
+            </label>
+            <input type="tel" id="loginPhone" class="input-field" placeholder="למשל: 050-1234567" autocomplete="tel">
+            <div class="input-hint">למספר זה יישלח קוד התחברות בוואטסאפ</div>
+          </div>
+
+          <button type="submit" id="submitLoginPhoneBtn" class="btn btn-primary" style="width: 100%; padding: 13px; font-size: 1rem;">
+            <span id="loginPhoneBtnText">שלחו לי קוד התחברות בוואטסאפ 📲</span>
+            <span id="loginPhoneBtnSpinner" style="display: none;">⏳ מאתר עסק ושולח קוד...</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Step 2: WhatsApp OTP Verification -->
+      <div id="loginStepOtp" style="display: none;">
+        <div class="otp-step-desc">
+          <span>שלחנו קוד אימות בן 6 ספרות לוואטסאפ למספר </span>
+          <strong id="otpPhoneDisplay" style="color: var(--accent-green-light); direction: ltr; display: inline-block;"></strong>
+        </div>
+
+        <form id="loginOtpForm" novalidate>
+          <div class="form-group" style="margin-bottom: 18px; position: relative;">
+            <label class="form-label" for="loginOtpCode" style="text-align: center;">
+              <span class="req">*</span> הזינו את קוד האימות בן 6 הספרות
+            </label>
+            <input type="text" id="loginOtpCode" class="input-field otp-input" placeholder="------" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+          </div>
+
+          <button type="submit" id="submitLoginOtpBtn" class="btn btn-primary" style="width: 100%; padding: 13px; font-size: 1rem;">
+            <span id="loginOtpBtnText">התחבר לדשבורד 🚀</span>
+            <span id="loginOtpBtnSpinner" style="display: none;">⏳ מאמת קוד...</span>
+          </button>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; font-size: 0.88rem;">
+            <button type="button" id="resendOtpBtn" style="background: none; border: none; color: var(--text-muted); cursor: not-allowed; font-size: inherit; font-family: inherit;" disabled>
+              לא קיבלת? שלח שוב בעוד (<span id="resendCountdown">30</span>s)
+            </button>
+            <button type="button" id="backToPhoneStepBtn" style="background: none; border: none; color: var(--accent-cyan); cursor: pointer; font-size: inherit; font-family: inherit; font-weight: 600;">
+              ← החלף מספר
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Logic Script -->
+  <script>
+    // 1. Calculator Logic
+    const cancellSlider = document.getElementById('cancellationsSlider');
+    const priceSlider = document.getElementById('priceSlider');
+    const cancellVal = document.getElementById('cancellationsVal');
+    const priceVal = document.getElementById('priceVal');
+    const calcMonthlyResult = document.getElementById('calcMonthlyResult');
+    const calcYearlyResult = document.getElementById('calcYearlyResult');
+
+    function updateCalculator() {
+      const c = parseInt(cancellSlider.value, 10);
+      const p = parseInt(priceSlider.value, 10);
+      cancellVal.textContent = `${c} ביטולים`;
+      priceVal.textContent = `₪${p}`;
+
+      const monthly = Math.round(c * 4.33 * p);
+      const yearly = monthly * 12;
+      calcMonthlyResult.textContent = `₪${monthly.toLocaleString()}`;
+      calcYearlyResult.textContent = `₪${yearly.toLocaleString()}`;
+    }
+
+    cancellSlider.addEventListener('input', updateCalculator);
+    priceSlider.addEventListener('input', updateCalculator);
+    updateCalculator();
+
+    // 2. FAQ Accordion
+    document.querySelectorAll('.faq-question').forEach(q => {
+      q.addEventListener('click', () => {
+        const item = q.parentElement;
+        item.classList.toggle('active');
+      });
+    });
+
+    // 3. Dynamic Service Builder
+    const servicesContainer = document.getElementById('servicesContainer');
+    const addServiceBtn = document.getElementById('addServiceBtn');
+
+    function updateRemoveButtons() {
+      const rows = servicesContainer.querySelectorAll('.service-row');
+      rows.forEach(row => {
+        const btn = row.querySelector('.btn-remove-row');
+        if (rows.length > 1) {
+          btn.style.visibility = 'visible';
+        } else {
+          btn.style.visibility = 'hidden';
+        }
+      });
+    }
+
+    // Validation Manager
+    function validateIsraeliPhoneDetailed(phone) {
+      const trimmed = (phone || '').trim();
+      if (!trimmed) {
+        return { valid: false, message: 'נא להזין מספר נייד' };
+      }
+      const clean = trimmed.replace(/[\s\-\(\)]/g, '');
+      if (!/^\+?\d+$/.test(clean)) {
+        return { valid: false, message: 'מספר הטלפון יכול להכיל ספרות בלבד' };
+      }
+      if (/^0[23489]/.test(clean) || /^\+?972[23489]/.test(clean)) {
+        return { valid: false, message: 'נא להזין מספר סלולרי (מתחיל ב-05) כדי שנוכל לחבר את הוואטסאפ' };
+      }
+
+      let digits = clean;
+      if (digits.startsWith('+')) digits = digits.slice(1);
+      if (digits.startsWith('972')) digits = digits.slice(3);
+      if (digits.startsWith('0')) digits = digits.slice(1);
+
+      if (!digits.startsWith('5')) {
+        return { valid: false, message: 'נא להזין מספר סלולרי (מתחיל ב-05) כדי שנוכל לחבר את הוואטסאפ' };
+      }
+      if (digits.length < 9) {
+        return { valid: false, message: 'המספר קצר מדי. מספר נייד תקין כולל 10 ספרות (לדוגמה: 052-1234567)' };
+      }
+      if (digits.length > 9) {
+        return { valid: false, message: 'המספר ארוך מדי. מספר נייד תקין כולל 10 ספרות (לדוגמה: 052-1234567)' };
+      }
+      if (!/^5[0-9]\d{7}$/.test(digits)) {
+        return { valid: false, message: 'קידומת סלולרית לא מוכרת. מספר נייד תקין מתחיל ב-05' };
+      }
+
+      return { valid: true, cleanPhone: `0${digits}` };
+    }
+
+    function validateIsraeliPhone(phone) {
+      return validateIsraeliPhoneDetailed(phone).valid;
+    }
+
+    function showFieldError(inputEl, message) {
+      if (!inputEl) return;
+      inputEl.classList.add('input-invalid');
+      const parent = inputEl.parentElement;
+      let errorSpan = parent.querySelector('.field-error-msg');
+      if (!errorSpan) {
+        errorSpan = document.createElement('span');
+        errorSpan.className = 'field-error-msg';
+        parent.appendChild(errorSpan);
+      }
+      errorSpan.textContent = message;
+    }
+
+    function clearFieldError(inputEl) {
+      if (!inputEl) return;
+      inputEl.classList.remove('input-invalid');
+      const parent = inputEl.parentElement;
+      const errorSpan = parent.querySelector('.field-error-msg');
+      if (errorSpan) errorSpan.remove();
+    }
+
+    function validateNameField(inputEl, fieldType = 'biz') {
+      const val = (inputEl.value || '').trim();
+      if (!val) {
+        const msg = fieldType === 'biz' ? 'נא למלא את שם העסק' : 'נא למלא את שמך המלא';
+        showFieldError(inputEl, msg);
+        return false;
+      }
+      if (val.length < 2) {
+        showFieldError(inputEl, 'השם קצר מדי, נא להזין לפחות 2 תווים');
+        return false;
+      }
+      clearFieldError(inputEl);
+      return true;
+    }
+
+    function validatePhoneField(inputEl) {
+      const res = validateIsraeliPhoneDetailed(inputEl.value);
+      if (!res.valid) {
+        showFieldError(inputEl, res.message);
+        return false;
+      }
+      clearFieldError(inputEl);
+      return true;
+    }
+
+    function validateServiceRow(row) {
+      const nameInput = row.querySelector('.service-name-input');
+      const durInput = row.querySelector('.service-duration-input');
+      const priceInput = row.querySelector('.service-price-input');
+      let valid = true;
+      let firstInvalid = null;
+
+      const nameVal = (nameInput.value || '').trim();
+      if (!nameVal) {
+        showFieldError(nameInput, "נא לתת שם לשירות (למשל: מניקור ג'ל)");
+        valid = false;
+        firstInvalid = firstInvalid || nameInput;
+      } else {
+        clearFieldError(nameInput);
+      }
+
+      const durVal = parseInt(durInput.value, 10);
+      if (isNaN(durVal) || durVal < 5) {
+        showFieldError(durInput, "משך הטיפול חייב להיות לפחות 5 דקות");
+        valid = false;
+        firstInvalid = firstInvalid || durInput;
+      } else if (durVal > 480) {
+        showFieldError(durInput, "משך הטיפול אינו יכול לעלות על 480 דקות");
+        valid = false;
+        firstInvalid = firstInvalid || durInput;
+      } else {
+        clearFieldError(durInput);
+      }
+
+      const priceStr = (priceInput.value || '').trim();
+      const priceVal = parseFloat(priceStr);
+      if (priceStr === '' || isNaN(priceVal) || priceVal < 0) {
+        showFieldError(priceInput, "נא להזין מחיר (או 0 אם השירות ללא עלות)");
+        valid = false;
+        firstInvalid = firstInvalid || priceInput;
+      } else {
+        clearFieldError(priceInput);
+      }
+
+      if (!valid) {
+        row.classList.add('service-row-invalid');
+      } else {
+        row.classList.remove('service-row-invalid');
+      }
+
+      return { valid, firstInvalid };
+    }
+
+    function attachServiceRowListeners(row) {
+      const nameInput = row.querySelector('.service-name-input');
+      const durInput = row.querySelector('.service-duration-input');
+      const priceInput = row.querySelector('.service-price-input');
+
+      // Clear on input
+      nameInput.addEventListener('input', () => clearFieldError(nameInput));
+      durInput.addEventListener('input', () => clearFieldError(durInput));
+      priceInput.addEventListener('input', () => clearFieldError(priceInput));
+
+      // Validate on blur
+      nameInput.addEventListener('blur', () => {
+        if (!nameInput.value.trim()) {
+          showFieldError(nameInput, "נא לתת שם לשירות (למשל: מניקור ג'ל)");
+        } else {
+          clearFieldError(nameInput);
+        }
+      });
+
+      durInput.addEventListener('blur', () => {
+        const d = parseInt(durInput.value, 10);
+        if (isNaN(d) || d < 5) {
+          showFieldError(durInput, "משך הטיפול חייב להיות לפחות 5 דקות");
+        } else if (d > 480) {
+          showFieldError(durInput, "משך הטיפול אינו יכול לעלות על 480 דקות");
+        } else {
+          clearFieldError(durInput);
+        }
+      });
+
+      priceInput.addEventListener('blur', () => {
+        const pStr = (priceInput.value || '').trim();
+        const p = parseFloat(pStr);
+        if (pStr === '' || isNaN(p) || p < 0) {
+          showFieldError(priceInput, "נא להזין מחיר (או 0 אם השירות ללא עלות)");
+        } else {
+          clearFieldError(priceInput);
+        }
+      });
+    }
+
+    function createServiceRow(name = '', duration = 60, price = 200) {
+      const row = document.createElement('div');
+      row.className = 'service-row';
+      row.innerHTML = `
+        <div class="service-col" style="position: relative;">
+          <input type="text" class="input-field service-name-input" placeholder="שם השירות (למשל: תספורת ועיצוב)" value="${name}">
+        </div>
+        <div class="service-col" style="position: relative;">
+          <input type="number" class="input-field service-duration-input" placeholder="משך (דקות)" value="${duration}" min="5" max="480">
+        </div>
+        <div class="service-col" style="position: relative;">
+          <input type="number" class="input-field service-price-input" placeholder="מחיר ב-₪" value="${price}" min="0" step="1">
+        </div>
+        <button type="button" class="btn-remove-row" title="מחק שירות">✕</button>
+      `;
+
+      row.querySelector('.btn-remove-row').addEventListener('click', () => {
+        if (servicesContainer.querySelectorAll('.service-row').length > 1) {
+          row.remove();
+          updateRemoveButtons();
+        }
+      });
+
+      attachServiceRowListeners(row);
+      return row;
+    }
+
+    // Attach initial row listeners & remove event
+    const firstRow = servicesContainer.querySelector('.service-row');
+    if (firstRow) {
+      attachServiceRowListeners(firstRow);
+      const firstRowRemoveBtn = firstRow.querySelector('.btn-remove-row');
+      if (firstRowRemoveBtn) {
+        firstRowRemoveBtn.addEventListener('click', () => {
+          if (servicesContainer.querySelectorAll('.service-row').length > 1) {
+            firstRow.remove();
+            updateRemoveButtons();
+          }
+        });
+      }
+    }
+
+    addServiceBtn.addEventListener('click', () => {
+      const count = servicesContainer.querySelectorAll('.service-row').length + 1;
+      const newRow = createServiceRow(`שירות מספר ${count}`, 45, 180);
+      servicesContainer.appendChild(newRow);
+      updateRemoveButtons();
+      newRow.querySelector('.service-name-input').focus();
+    });
+
+    // 4. Slug Preview Hint
+    const bizNameInput = document.getElementById('bizName');
+    const bizPhoneInput = document.getElementById('bizPhone');
+    const bizSlugInput = document.getElementById('bizSlug');
+    const slugPreviewHint = document.getElementById('slugPreviewHint');
+
+    function updateSlugHint() {
+      const slugVal = bizSlugInput.value.trim() || bizNameInput.value.trim() || 'your-clinic';
+      slugPreviewHint.textContent = `כתובת הדף: /b/${slugVal.toLowerCase().replace(/[^a-z0-9א-ת]+/g, '-')}`;
+    }
+
+    bizNameInput.addEventListener('input', () => {
+      clearFieldError(bizNameInput);
+      if (!bizSlugInput.value.trim()) updateSlugHint();
+    });
+    bizNameInput.addEventListener('blur', () => validateNameField(bizNameInput, 'biz'));
+
+    bizPhoneInput.addEventListener('input', () => {
+      clearFieldError(bizPhoneInput);
+    });
+    bizPhoneInput.addEventListener('blur', () => validatePhoneField(bizPhoneInput));
+
+    bizSlugInput.addEventListener('input', updateSlugHint);
+
+    // 5. Onboarding Form Submission with User-Space Validation
+    const onboardingForm = document.getElementById('onboardingForm');
+    const submitBtn = document.getElementById('submitOnboardingBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const alertBox = document.getElementById('onboardingAlert');
+
+    function showAlert(msg, isError = true) {
+      alertBox.textContent = msg;
+      alertBox.className = `alert-box ${isError ? 'alert-danger' : 'alert-success'}`;
+      alertBox.style.display = 'block';
+      alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    onboardingForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertBox.style.display = 'none';
+
+      let hasError = false;
+      let firstErrorEl = null;
+
+      // 1. Validate Business Name
+      if (!validateNameField(bizNameInput, 'biz')) {
+        hasError = true;
+        firstErrorEl = firstErrorEl || bizNameInput;
+      }
+
+      // 2. Validate Phone
+      if (!validatePhoneField(bizPhoneInput)) {
+        hasError = true;
+        firstErrorEl = firstErrorEl || bizPhoneInput;
+      }
+
+      // 3. Validate Services
+      const serviceRows = servicesContainer.querySelectorAll('.service-row');
+      const services = [];
+
+      if (serviceRows.length === 0) {
+        showAlert('יש להגדיר לפחות שירות אחד.');
+        return;
+      }
+
+      serviceRows.forEach(row => {
+        const rowRes = validateServiceRow(row);
+        if (!rowRes.valid) {
+          hasError = true;
+          firstErrorEl = firstErrorEl || rowRes.firstInvalid;
+        } else {
+          services.push({
+            name: row.querySelector('.service-name-input').value.trim(),
+            duration_minutes: parseInt(row.querySelector('.service-duration-input').value, 10),
+            price: parseFloat(row.querySelector('.service-price-input').value)
+          });
+        }
+      });
+
+      // If any field is invalid, smoothly scroll to it and focus
+      if (hasError) {
+        if (firstErrorEl) {
+          firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          firstErrorEl.focus();
+        }
+        return;
+      }
+
+      // Submit payload
+      submitBtn.disabled = true;
+      btnText.style.display = 'none';
+      btnSpinner.style.display = 'inline-flex';
+
+      const businessType = document.getElementById('bizType').value;
+      const customSlug = bizSlugInput.value.trim() || null;
+
+      try {
+        const payload = {
+          name: bizNameInput.value.trim(),
+          phone_number: bizPhoneInput.value.trim(),
+          business_type: businessType,
+          slug: customSlug,
+          services: services
+        };
+
+        const res = await fetch('/api/v1/public/register-business', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          submitBtn.disabled = false;
+          btnText.style.display = 'inline-flex';
+          btnSpinner.style.display = 'none';
+
+          let mappedServerError = false;
+
+          // Field-level error fallback mapping from server 422/400
+          if (Array.isArray(data.detail)) {
+            data.detail.forEach(item => {
+              const field = item.loc ? item.loc[item.loc.length - 1] : '';
+              if (field === 'phone_number') {
+                showFieldError(bizPhoneInput, 'נא להזין מספר סלולרי תקין (מתחיל ב-05) בן 10 ספרות');
+                firstErrorEl = firstErrorEl || bizPhoneInput;
+                mappedServerError = true;
+              } else if (field === 'name') {
+                showFieldError(bizNameInput, 'השם קצר מדי, נא להזין לפחות 2 תווים');
+                firstErrorEl = firstErrorEl || bizNameInput;
+                mappedServerError = true;
+              }
+            });
+          }
+
+          if (data.field_errors) {
+            for (const [fld, msg] of Object.entries(data.field_errors)) {
+              if (fld === 'phone_number') {
+                showFieldError(bizPhoneInput, msg);
+                firstErrorEl = firstErrorEl || bizPhoneInput;
+                mappedServerError = true;
+              } else if (fld === 'name') {
+                showFieldError(bizNameInput, msg);
+                firstErrorEl = firstErrorEl || bizNameInput;
+                mappedServerError = true;
+              }
+            }
+          }
+
+          if (mappedServerError && firstErrorEl) {
+            firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstErrorEl.focus();
+            return;
+          }
+
+          // General alert fallback
+          const fallbackMsg = typeof data.detail === 'string' ? data.detail : (data.message || 'אירעה שגיאה ברישום העסק. אנא בדקו את הנתונים ונסו שוב.');
+          showAlert(fallbackMsg);
+          return;
+        }
+
+        // Success! Save token and redirect
+        if (data.access_token) {
+          localStorage.setItem('slotalert_token', data.access_token);
+        }
+
+        showAlert('העסק הוקם בהצלחה! מעביר אותך לדשבורד...', false);
+
+        setTimeout(() => {
+          window.location.href = data.dashboard_url;
+        }, 800);
+
+      } catch (err) {
+        showAlert('שגיאת תקשורת עם השרת. אנא ודאו חיבור לאינטרנט ונסו שוב.');
+        submitBtn.disabled = false;
+        btnText.style.display = 'inline-flex';
+        btnSpinner.style.display = 'none';
+      }
+    });
+
+    // 6. Direct Business Login Modal (2-Step Phone & WhatsApp OTP)
+    const loginModal = document.getElementById('businessLoginModal');
+    const openLoginBtn = document.getElementById('openLoginModalBtn');
+    const closeLoginBtn = document.getElementById('closeLoginModalBtn');
+
+    const stepPhone = document.getElementById('loginStepPhone');
+    const stepOtp = document.getElementById('loginStepOtp');
+    const loginPhoneInput = document.getElementById('loginPhone');
+    const loginPhoneForm = document.getElementById('loginPhoneForm');
+    const submitPhoneBtn = document.getElementById('submitLoginPhoneBtn');
+    const phoneBtnText = document.getElementById('loginPhoneBtnText');
+    const phoneBtnSpinner = document.getElementById('loginPhoneBtnSpinner');
+
+    const otpPhoneDisplay = document.getElementById('otpPhoneDisplay');
+    const loginOtpInput = document.getElementById('loginOtpCode');
+    const loginOtpForm = document.getElementById('loginOtpForm');
+    const submitOtpBtn = document.getElementById('submitLoginOtpBtn');
+    const otpBtnText = document.getElementById('loginOtpBtnText');
+    const otpBtnSpinner = document.getElementById('loginOtpBtnSpinner');
+
+    const resendBtn = document.getElementById('resendOtpBtn');
+    const resendCountdown = document.getElementById('resendCountdown');
+    const backToPhoneBtn = document.getElementById('backToPhoneStepBtn');
+
+    let currentLoginPhone = '';
+    let resendTimer = null;
+    let resendSeconds = 30;
+
+    function openLoginModal() {
+      loginModal.classList.add('active');
+      resetLoginModal();
+      loginPhoneInput.focus();
+    }
+
+    function closeLoginModal() {
+      loginModal.classList.remove('active');
+      if (resendTimer) clearInterval(resendTimer);
+    }
+
+    function resetLoginModal() {
+      stepPhone.style.display = 'block';
+      stepOtp.style.display = 'none';
+      loginPhoneInput.value = '';
+      loginOtpInput.value = '';
+      clearFieldError(loginPhoneInput);
+      clearFieldError(loginOtpInput);
+      if (resendTimer) clearInterval(resendTimer);
+      resendBtn.disabled = true;
+      resendBtn.style.color = 'var(--text-muted)';
+      resendBtn.style.cursor = 'not-allowed';
+      resendCountdown.textContent = '30';
+      resendSeconds = 30;
+      submitPhoneBtn.disabled = false;
+      phoneBtnText.style.display = 'inline';
+      phoneBtnSpinner.style.display = 'none';
+      submitOtpBtn.disabled = false;
+      otpBtnText.style.display = 'inline';
+      otpBtnSpinner.style.display = 'none';
+    }
+
+    openLoginBtn.addEventListener('click', openLoginModal);
+    closeLoginBtn.addEventListener('click', closeLoginModal);
+    loginModal.addEventListener('click', (e) => {
+      if (e.target === loginModal) closeLoginModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && loginModal.classList.contains('active')) closeLoginModal();
+    });
+
+    loginPhoneInput.addEventListener('input', () => clearFieldError(loginPhoneInput));
+    loginOtpInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '');
+      clearFieldError(loginOtpInput);
+      if (e.target.value.length === 6) {
+        loginOtpForm.dispatchEvent(new Event('submit'));
+      }
+    });
+
+    backToPhoneBtn.addEventListener('click', () => {
+      stepOtp.style.display = 'none';
+      stepPhone.style.display = 'block';
+      clearFieldError(loginPhoneInput);
+      loginPhoneInput.focus();
+    });
+
+    function startResendCountdown() {
+      if (resendTimer) clearInterval(resendTimer);
+      resendSeconds = 30;
+      resendCountdown.textContent = resendSeconds;
+      resendBtn.disabled = true;
+      resendBtn.style.color = 'var(--text-muted)';
+      resendBtn.style.cursor = 'not-allowed';
+      resendBtn.innerHTML = `לא קיבלת? שלח שוב בעוד (<span id="resendCountdown">${resendSeconds}</span>s)`;
+
+      resendTimer = setInterval(() => {
+        resendSeconds--;
+        const cd = document.getElementById('resendCountdown');
+        if (cd) cd.textContent = resendSeconds;
+        if (resendSeconds <= 0) {
+          clearInterval(resendTimer);
+          resendBtn.disabled = false;
+          resendBtn.style.color = 'var(--accent-cyan)';
+          resendBtn.style.cursor = 'pointer';
+          resendBtn.textContent = 'שלחו קוד שוב 📲';
+        }
+      }, 1000);
+    }
+
+    async function sendLoginOtp(phone) {
+      submitPhoneBtn.disabled = true;
+      phoneBtnText.style.display = 'none';
+      phoneBtnSpinner.style.display = 'inline-flex';
+
+      try {
+        const res = await fetch('/api/v1/auth/business-login-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone_number: phone })
+        });
+        const data = await res.json();
+
+        submitPhoneBtn.disabled = false;
+        phoneBtnText.style.display = 'inline';
+        phoneBtnSpinner.style.display = 'none';
+
+        if (!res.ok) {
+          const errDetail = data.detail || 'לא נמצא עסק הרשום עם מספר זה.';
+          showFieldError(loginPhoneInput, typeof errDetail === 'string' ? errDetail : 'לא קיים עסק פעיל עם מספר טלפון זה');
+          loginPhoneInput.focus();
+          return false;
+        }
+
+        currentLoginPhone = phone;
+        otpPhoneDisplay.textContent = phone;
+        stepPhone.style.display = 'none';
+        stepOtp.style.display = 'block';
+        loginOtpInput.value = '';
+        clearFieldError(loginOtpInput);
+        loginOtpInput.focus();
+        startResendCountdown();
+        return true;
+      } catch (err) {
+        submitPhoneBtn.disabled = false;
+        phoneBtnText.style.display = 'inline';
+        phoneBtnSpinner.style.display = 'none';
+        showFieldError(loginPhoneInput, 'שגיאת תקשורת. בדקו את החיבור לרשת ונסו שוב.');
+        return false;
+      }
+    }
+
+    loginPhoneForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearFieldError(loginPhoneInput);
+      const phone = loginPhoneInput.value.trim();
+
+      const phoneValidation = validateIsraeliPhoneDetailed(phone);
+      if (!phoneValidation.valid) {
+        showFieldError(loginPhoneInput, phoneValidation.message);
+        loginPhoneInput.focus();
+        return;
+      }
+
+      await sendLoginOtp(phone);
+    });
+
+    resendBtn.addEventListener('click', async () => {
+      if (resendBtn.disabled || !currentLoginPhone) return;
+      resendBtn.disabled = true;
+      resendBtn.textContent = 'שולח שוב...';
+      const success = await sendLoginOtp(currentLoginPhone);
+      if (!success) {
+        resendBtn.disabled = false;
+        resendBtn.textContent = 'שלחו קוד שוב 📲';
+      }
+    });
+
+    loginOtpForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearFieldError(loginOtpInput);
+      const code = loginOtpInput.value.trim();
+
+      if (!code || code.length < 4) {
+        showFieldError(loginOtpInput, 'נא להזין קוד אימות בן 6 ספרות');
+        loginOtpInput.focus();
+        return;
+      }
+
+      submitOtpBtn.disabled = true;
+      otpBtnText.style.display = 'none';
+      otpBtnSpinner.style.display = 'inline-flex';
+
+      try {
+        const res = await fetch('/api/v1/auth/business-login-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone_number: currentLoginPhone,
+            code: code
+          })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          submitOtpBtn.disabled = false;
+          otpBtnText.style.display = 'inline';
+          otpBtnSpinner.style.display = 'none';
+          const errMsg = data.detail || 'קוד אימות שגוי או שפג תוקפו';
+          showFieldError(loginOtpInput, typeof errMsg === 'string' ? errMsg : 'קוד אימות שגוי');
+          loginOtpInput.focus();
+          return;
+        }
+
+        // Success! Store token in localStorage
+        if (data.access_token) {
+          localStorage.setItem('business_token', data.access_token);
+          localStorage.setItem('slotalert_token', data.access_token);
+        }
+
+        submitOtpBtn.disabled = true;
+        otpBtnSpinner.style.display = 'none';
+        otpBtnText.style.display = 'inline';
+        otpBtnText.textContent = 'התחברת בהצלחה! מעביר לדשבורד... ✓';
+        submitOtpBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+
+        setTimeout(() => {
+          window.location.href = data.dashboard_url;
+        }, 600);
+
+      } catch (err) {
+        submitOtpBtn.disabled = false;
+        otpBtnText.style.display = 'inline';
+        otpBtnSpinner.style.display = 'none';
+        showFieldError(loginOtpInput, 'שגיאת תקשורת. בדקו את החיבור לרשת.');
+      }
+    });
+  </script>
+</body>
+</html>
+

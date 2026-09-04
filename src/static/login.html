@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>כניסת בעלת עסק | SlotAlert</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <meta name="theme-color" content="#0f172a">
+</head>
+<body>
+  <div class="container" style="max-width: 420px;">
+    <div class="header">
+      <div class="brand-badge">🔐 כניסה מאובטחת ללא סיסמה</div>
+      <h1 class="business-name" id="bizTitle">כניסה לדשבורד</h1>
+      <p class="business-tagline" id="bizSubtitle">קבלו קוד PIN חד-פעמי ישירות לוואטסאפ שלכם</p>
+    </div>
+
+    <!-- Step 1: Request PIN -->
+    <div id="stepRequest">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.5;">
+          הקוד יישלח למספר הוואטסאפ הרשום של העסק:<br>
+          <strong id="maskedPhone" style="color: #a5b4fc; font-size: 1.1rem; direction: ltr; display: inline-block; margin-top: 6px;">טוען...</strong>
+        </p>
+      </div>
+
+      <button type="button" class="btn-submit" id="requestPinBtn">
+        <span>שלח לי קוד כניסה בוואטסאפ</span>
+        <span>💬</span>
+      </button>
+
+      <div style="margin-top: 24px; text-align: center; border-top: 1px solid var(--border-color); padding-top: 16px;">
+        <span style="font-size: 0.85rem; color: var(--text-muted);">יש לך מפתח גישה מהיר (Master Key)?</span>
+        <div style="margin-top: 8px;">
+          <input type="password" id="masterKeyInput" class="input-field" placeholder="הזן מפתח גישה..." style="height: 44px; font-size: 0.9rem;">
+          <button type="button" id="masterKeyBtn" class="btn-submit" style="height: 40px; font-size: 0.9rem; margin-top: 8px; background: rgba(255,255,255,0.1); box-shadow: none;">
+            כניסה עם מפתח
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Verify PIN -->
+    <div id="stepVerify" style="display: none;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <p style="color: #34d399; font-size: 0.95rem; font-weight: 600;">
+          ✓ הקוד נשלח בהצלחה לוואטסאפ!
+        </p>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+          הזינו את 4 הספרות שהתקבלו:
+        </p>
+      </div>
+
+      <form id="verifyForm">
+        <div class="form-group">
+          <input type="text" id="pinInput" class="input-field" maxlength="6" placeholder="• • • •" 
+                 style="text-align: center; font-size: 1.8rem; letter-spacing: 12px; height: 60px;" required autofocus>
+        </div>
+
+        <button type="submit" class="btn-submit" id="verifyBtn">
+          <span>אמת קוד והיכנס</span>
+          <span>🚀</span>
+        </button>
+
+        <button type="button" id="resendBtn" style="background: none; border: none; color: #a5b4fc; font-size: 0.85rem; width: 100%; margin-top: 16px; cursor: pointer; text-decoration: underline;">
+          לא קיבלת? שלח קוד שוב
+        </button>
+      </form>
+    </div>
+
+    <div class="error-msg" id="errorMsg" style="text-align: center; margin-top: 12px;"></div>
+  </div>
+
+  <script>
+    const pathParts = window.location.pathname.split('/');
+    const loginIdx = pathParts.indexOf('login');
+    const slug = loginIdx !== -1 && pathParts[loginIdx + 1] ? pathParts[loginIdx + 1] : 'shiran-clinic';
+
+    // 1. Fetch masked business info
+    async function loadInfo() {
+      try {
+        const res = await fetch(`/api/v1/public/b/${slug}`);
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('bizTitle').innerText = data.name;
+          const clean = data.phone_number.replace(/\s+/g, '');
+          const prefix = clean.substring(0, 4);
+          const suffix = clean.substring(clean.length - 4);
+          document.getElementById('maskedPhone').innerText = `${prefix}-***-${suffix}`;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 2. Request PIN
+    document.getElementById('requestPinBtn').onclick = async () => {
+      const btn = document.getElementById('requestPinBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+      document.getElementById('errorMsg').style.display = 'none';
+
+      try {
+        const res = await fetch(`/api/v1/auth/${slug}/request-pin`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          document.getElementById('stepRequest').style.display = 'none';
+          document.getElementById('stepVerify').style.display = 'block';
+          document.getElementById('pinInput').focus();
+        } else {
+          showError(data.detail || 'שגיאה בשליחת הקוד');
+          btn.disabled = false;
+          btn.innerHTML = '<span>שלח לי קוד כניסה בוואטסאפ</span><span>💬</span>';
+        }
+      } catch (e) {
+        showError('שגיאת תקשורת עם השרת');
+        btn.disabled = false;
+        btn.innerHTML = '<span>שלח לי קוד כניסה בוואטסאפ</span><span>💬</span>';
+      }
+    };
+
+    // 3. Verify PIN
+    document.getElementById('verifyForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const pin = document.getElementById('pinInput').value.trim();
+      const btn = document.getElementById('verifyBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+      document.getElementById('errorMsg').style.display = 'none';
+
+      try {
+        const res = await fetch(`/api/v1/auth/${slug}/verify-pin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: pin }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.access_token) {
+          localStorage.setItem('slotalert_token', data.access_token);
+          window.location.href = `/dashboard/${slug}`;
+        } else {
+          showError(data.detail || 'קוד PIN שגוי');
+          btn.disabled = false;
+          btn.innerHTML = '<span>אמת קוד והיכנס</span><span>🚀</span>';
+        }
+      } catch (e) {
+        showError('שגיאת תקשורת');
+        btn.disabled = false;
+        btn.innerHTML = '<span>אמת קוד והיכנס</span><span>🚀</span>';
+      }
+    };
+
+    // 4. Master Key Login
+    document.getElementById('masterKeyBtn').onclick = () => {
+      const key = document.getElementById('masterKeyInput').value.trim();
+      if (!key) return;
+      localStorage.setItem('slotalert_token', key);
+      window.location.href = `/dashboard/${slug}`;
+    };
+
+    // Resend button
+    document.getElementById('resendBtn').onclick = () => {
+      document.getElementById('stepVerify').style.display = 'none';
+      document.getElementById('stepRequest').style.display = 'block';
+      document.getElementById('requestPinBtn').disabled = false;
+      document.getElementById('requestPinBtn').innerHTML = '<span>שלח לי קוד כניסה בוואטסאפ</span><span>💬</span>';
+    };
+
+    function showError(msg) {
+      const err = document.getElementById('errorMsg');
+      err.innerText = msg;
+      err.style.display = 'block';
+    }
+
+    loadInfo();
+  </script>
+</body>
+</html>

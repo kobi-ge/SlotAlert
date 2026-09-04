@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>דשבורד ניהול תורים | SlotAlert</title>
+  <link rel="stylesheet" href="/static/dashboard.css">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="דשבורד בעלת עסק לפרסום תורים שהתבטלו והפצה אוטומטית לממתינים בוואטסאפ.">
+</head>
+<body>
+  <!-- Toast Notification System -->
+  <div id="toastNotification" class="toast hidden" role="alert">
+    <div class="toast-icon" id="toastIcon">🚀</div>
+    <div class="toast-content">
+      <div class="toast-title" id="toastTitle">התור הופץ בהצלחה! 🚀</div>
+      <div class="toast-desc" id="toastDesc">נשלחה התראה לממתינים מתאימים בוואטסאפ.</div>
+    </div>
+    <button class="toast-close" id="toastCloseBtn" type="button" aria-label="סגור">✕</button>
+  </div>
+
+  <div class="app-wrapper">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="biz-info">
+        <h1 id="bizTitle">טוען...</h1>
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span>מחובר לוואטסאפ (Cloud API)</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+        <button id="openQrKitBtn" class="btn-qr-kit" style="background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.45); color: #c7d2fe; border-radius: 10px; padding: 7px 12px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s ease;">
+          <span>🖨️</span>
+          <span>שלט QR להדפסה</span>
+        </button>
+        <div class="counter-pill">
+          <span class="num" id="waitlistCount">0</span>
+          <span class="label">ממתינים פעילים</span>
+        </div>
+        <button id="logoutBtn" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); color: #cbd5e1; border-radius: 10px; padding: 8px 10px; font-size: 0.8rem; cursor: pointer;">
+          יציאה
+        </button>
+      </div>
+    </header>
+
+    <!-- Big Prominent Action Button -->
+    <div class="cta-banner">
+      <button class="btn-hero" id="openPublishModalBtn">
+        <span>+ פרסם תור שהתבטל</span>
+        <span>⚡</span>
+      </button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs-nav">
+      <button class="tab-btn active" data-tab="activityTab">פעילות אחרונה</button>
+      <button class="tab-btn" data-tab="waitlistTab">רשימת ממתינים</button>
+    </nav>
+
+    <!-- Tab 1: Activity Feed -->
+    <main id="activityTab" class="tab-content active">
+      <div id="slotsFeed">
+        <!-- Dynamically rendered slots -->
+      </div>
+    </main>
+
+    <!-- Tab 2: Waitlist Contacts -->
+    <section id="waitlistTab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <span style="font-weight: 700; font-size: 1rem;">אנשי קשר ברשימה</span>
+        <button id="openAddCustomerBtn" class="btn-hero" style="width: auto; height: 38px; padding: 0 16px; font-size: 0.85rem; border-radius: 10px;">
+          + הוסף לקוח
+        </button>
+      </div>
+      <div id="waitlistFeed">
+        <!-- Dynamically rendered customers -->
+      </div>
+    </section>
+  </div>
+
+  <!-- Quick Publish Modal -->
+  <div class="modal-overlay" id="publishModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h2 class="modal-title">פרסום תור שהתבטל ⚡</h2>
+        <button class="btn-close" id="closePublishModal">✕</button>
+      </div>
+
+      <form id="quickPublishForm" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="serviceSelect">שירות שהתפנה</label>
+          <select id="serviceSelect" class="form-select" required>
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <div id="customFieldsContainer" style="display: none; background: rgba(255,255,255,0.03); border: 1px dashed var(--border-color); border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="form-label" for="customServiceName">שם הטיפול / מבצע</label>
+            <input type="text" id="customServiceName" class="form-input" placeholder="למשל: טיפול יופי אקספרס">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="customPrice">מחיר מבצע (₪)</label>
+              <input type="number" id="customPrice" class="form-input" placeholder="למשל: 180" min="0">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="customDuration">משך (דקות)</label>
+              <input type="number" id="customDuration" class="form-input" placeholder="60" min="5">
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label class="form-label" for="slotDate">תאריך</label>
+            <input type="date" id="slotDate" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="slotTime">שעה</label>
+            <input type="time" id="slotTime" class="form-input" required>
+          </div>
+        </div>
+
+        <!-- Live Candidate Preview Banner -->
+        <div class="preview-banner" id="previewBanner">
+          <div class="preview-icon">🎯</div>
+          <div class="preview-text" id="previewText">
+            בודק כמות ממתינים מתאימים...
+          </div>
+        </div>
+
+        <button type="submit" class="btn-hero" id="submitPublishBtn">
+          <span>שלח התראה לכל הממתינים עכשיו!</span>
+          <span>📢</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Customer Modal -->
+  <div class="modal-overlay" id="customerModal">
+    <div class="modal-sheet" style="max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h2 class="modal-title">הוספת לקוח לרשימת ההמתנה 👤</h2>
+        <button class="btn-close" id="closeCustomerModal">✕</button>
+      </div>
+
+      <form id="addCustomerForm" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="custName">שם מלא</label>
+          <input type="text" id="custName" class="form-input" placeholder="למשל: דנה לוי" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="custPhone">מספר וואטסאפ</label>
+          <input type="tel" id="custPhone" class="form-input" placeholder="050-1234567" required>
+        </div>
+
+        <!-- Preferred Services -->
+        <div class="form-group">
+          <label class="form-label">שירותים מבוקשים (ריק = כל השירותים)</label>
+          <div class="chip-group" id="custServicesContainer">
+            <!-- Dynamically populated from servicesList -->
+          </div>
+        </div>
+
+        <!-- Preferred Days -->
+        <div class="form-group">
+          <div class="label-row">
+            <label class="form-label">ימים מועדפים</label>
+            <div class="helper-group">
+              <button type="button" class="helper-toggle-btn" id="custSelectAllDays">בחר הכל</button>
+              <span class="helper-divider">|</span>
+              <button type="button" class="helper-toggle-btn" id="custClearAllDays">נקה הכל</button>
+            </div>
+          </div>
+          <div class="days-grid" id="custDaysGrid">
+            <button type="button" class="day-btn" data-day="0">א'</button>
+            <button type="button" class="day-btn" data-day="1">ב'</button>
+            <button type="button" class="day-btn" data-day="2">ג'</button>
+            <button type="button" class="day-btn" data-day="3">ד'</button>
+            <button type="button" class="day-btn" data-day="4">ה'</button>
+            <button type="button" class="day-btn" data-day="5">ו'</button>
+          </div>
+        </div>
+
+        <!-- Preferred Time Slots -->
+        <div class="form-group">
+          <div class="label-row">
+            <label class="form-label">שעות נוחות</label>
+            <div class="helper-group">
+              <button type="button" class="helper-toggle-btn" id="custSelectAllSlots">כל השעות</button>
+              <span class="helper-divider">|</span>
+              <button type="button" class="helper-toggle-btn" id="custClearAllSlots">נקה</button>
+            </div>
+          </div>
+          <div class="slots-stack" id="custSlotsStack">
+            <div class="slot-btn" data-slot="MORNING">
+              <span class="slot-name">🌅 בוקר</span>
+              <span class="slot-hours">08:00 - 12:00</span>
+            </div>
+            <div class="slot-btn" data-slot="AFTERNOON">
+              <span class="slot-name">☀️ צהריים</span>
+              <span class="slot-hours">12:00 - 16:00</span>
+            </div>
+            <div class="slot-btn" data-slot="EVENING">
+              <span class="slot-name">🌙 ערב</span>
+              <span class="slot-hours">16:00 - 21:00</span>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-hero" id="submitAddCustBtn" style="height: 50px; font-size: 1rem; margin-top: 8px;">
+          <span>הוסף לרשימת ההמתנה</span>
+          <span>✨</span>
+        </button>
+        <div class="error-msg" id="custFormError" style="text-align: center; margin-top: 10px; color: #f87171; display: none;"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Print QR Kit Modal -->
+  <div class="modal-overlay" id="qrPrintModal">
+    <div class="modal-sheet" style="max-width: 580px;">
+      <div class="modal-header">
+        <h2 class="modal-title">שלט QR להדפסה לקליניקה 🖨️</h2>
+        <button class="btn-close" id="closeQrPrintModal">✕</button>
+      </div>
+
+      <div class="print-actions" style="margin-bottom: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn-hero" id="printNowBtn" style="height: 44px; width: auto; padding: 0 20px; font-size: 0.95rem;">
+          <span>הדפס עכשיו</span>
+          <span>🖨️</span>
+        </button>
+      </div>
+
+      <!-- Printable A4 Poster Frame -->
+      <div class="qr-poster-preview" id="printablePoster">
+        <div class="poster-inner">
+          <div class="poster-badge">⚡ תור פנוי ברגע האחרון</div>
+          <h1 class="poster-biz-name" id="posterBizName">שם העסק</h1>
+          <h2 class="poster-subtitle">הצטרפו לרשימת ההמתנה בוואטסאפ</h2>
+          
+          <div class="poster-qr-frame">
+            <div id="posterQrContainer" class="poster-qr-svg"></div>
+            <div class="poster-qr-caption">סרקו בנייד לפתיחת טופס ההרשמה המהיר</div>
+          </div>
+
+          <div class="poster-cta-box">
+            <p class="poster-cta-line"><strong>סורקים את הקוד ונכנסים לרשימת ההמתנה בוואטסאפ.</strong></p>
+            <p class="poster-cta-desc">ביטול ברגע האחרון? אתם הראשונים לדעת ולתפוס!</p>
+          </div>
+
+          <div class="poster-footer">
+            <span>מופעל ע"י SlotAlert ⚡ תור פנוי</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/qr.js"></script>
+
+  <script>
+    // Extract slug from /dashboard/{slug}
+    const pathParts = window.location.pathname.split('/');
+    const dashIdx = pathParts.indexOf('dashboard');
+    const slug = dashIdx !== -1 && pathParts[dashIdx + 1] ? pathParts[dashIdx + 1] : 'shiran-clinic';
+
+    // Token management (URL query param ?token=... or localStorage)
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryToken = urlParams.get('token');
+    if (queryToken) {
+      localStorage.setItem('slotalert_token', queryToken);
+    }
+    const authToken = localStorage.getItem('slotalert_token');
+    if (!authToken) {
+      window.location.href = `/login/${slug}`;
+    }
+
+    function authHeaders(extra = {}) {
+      const t = localStorage.getItem('slotalert_token') || '';
+      return {
+        ...extra,
+        'Authorization': `Bearer ${t}`,
+      };
+    }
+
+    function handleAuthError(res) {
+      if (res.status === 401) {
+        localStorage.removeItem('slotalert_token');
+        window.location.href = `/login/${slug}`;
+        return true;
+      }
+      return false;
+    }
+
+    let servicesList = [];
+    let debounceTimer = null;
+
+    // Initialize date picker to today and time to next hour
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    document.getElementById('slotDate').value = todayStr;
+    const hours = String(now.getHours() + 1).padStart(2, '0');
+    document.getElementById('slotTime').value = `${hours}:00`;
+
+    // 1. Fetch Dashboard Summary
+    async function loadDashboard() {
+      try {
+        const res = await fetch(`/api/v1/business/${slug}/dashboard`, {
+          headers: authHeaders(),
+        });
+        if (handleAuthError(res)) return;
+        if (!res.ok) return;
+        const data = await res.json();
+
+        document.getElementById('bizTitle').innerText = data.business_name;
+        document.getElementById('waitlistCount').innerText = data.active_waitlist_count;
+        renderRecentSlots(data.recent_slots);
+      } catch (e) {
+        console.error('Failed to load dashboard:', e);
+      }
+    }
+
+    // 2. Fetch Services for Dropdown
+    async function loadServices() {
+      try {
+        const res = await fetch(`/api/v1/public/b/${slug}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        servicesList = data.services || [];
+
+        const sel = document.getElementById('serviceSelect');
+        sel.innerHTML = '';
+        servicesList.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.innerText = `${s.name} (${s.price} ₪ - ${s.duration_minutes} דק')`;
+          sel.appendChild(opt);
+        });
+
+        // Add custom / ad-hoc option
+        const customOpt = document.createElement('option');
+        customOpt.value = 'custom';
+        customOpt.innerText = '✨ שירות בהתאמה אישית / מחיר מבצע...';
+        sel.appendChild(customOpt);
+
+        handleServiceChange();
+      } catch (e) {
+        console.error('Failed to load services:', e);
+      }
+    }
+
+    // 3. Render Recent Slots Activity
+    function renderRecentSlots(slots) {
+      const feed = document.getElementById('slotsFeed');
+      if (!slots || slots.length === 0) {
+        feed.innerHTML = '<div class="empty-state">אין תורים פעילים כרגע. לחצו על הכפתור למעלה כדי לפרסם תור שהתבטל!</div>';
+        return;
+      }
+
+      feed.innerHTML = slots.map(s => {
+        const dateObj = new Date(s.start_time);
+        const formattedDate = dateObj.toLocaleDateString('he-IL', { weekday: 'short', day: 'numeric', month: 'numeric' });
+        const formattedTime = dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+        let badgeClass = 'open pulse';
+        let badgeLabel = 'בהפצה (OPEN)';
+        let cancelBtnHtml = '';
+
+        if (s.status === 'CLAIMED') {
+          badgeClass = 'claimed';
+          badgeLabel = '✓ נתפס בהצלחה';
+        } else if (s.status === 'SENDING') {
+          badgeClass = 'sending';
+          badgeLabel = '⏳ שולח התראות...';
+          cancelBtnHtml = `<button type="button" class="btn-cancel-slot" onclick="handleCancelSlot(${s.id})" title="בטל תור">✕ בטל תור</button>`;
+        } else if (s.status === 'CANCELLED') {
+          badgeClass = 'cancelled';
+          badgeLabel = 'בוטל';
+        } else if (s.status === 'OPEN') {
+          cancelBtnHtml = `<button type="button" class="btn-cancel-slot" onclick="handleCancelSlot(${s.id})" title="בטל תור">✕ בטל תור</button>`;
+        }
+
+        let winnerHtml = '';
+        if (s.status === 'CLAIMED' && s.claimed_by_name) {
+          winnerHtml = `
+            <div class="slot-winner-box">
+              🎯 נתפס ע"י: <strong>${s.claimed_by_name}</strong> (${s.claimed_by_phone || ''})
+            </div>
+          `;
+        }
+
+        return `
+          <div class="slot-card" id="slot-${s.id}">
+            <div class="slot-header">
+              <div>
+                <div class="slot-service">${s.service_name}</div>
+                <div class="slot-price">${s.price} ₪</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                ${cancelBtnHtml}
+                <span class="badge ${badgeClass}">${badgeLabel}</span>
+              </div>
+            </div>
+            <div class="slot-details">
+              📅 ${formattedDate} בשעה <strong>${formattedTime}</strong>
+            </div>
+            ${winnerHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Prepend newly created slot immediately to top of Recent Activity feed
+    function prependOptimisticSlot(slot) {
+      const feed = document.getElementById('slotsFeed');
+      const emptyState = feed.querySelector('.empty-state');
+      if (emptyState) {
+        emptyState.remove();
+      }
+
+      const existingCard = document.getElementById(`slot-${slot.id}`);
+      if (existingCard) {
+        existingCard.remove();
+      }
+
+      const dateObj = new Date(slot.start_time);
+      const formattedDate = dateObj.toLocaleDateString('he-IL', { weekday: 'short', day: 'numeric', month: 'numeric' });
+      const formattedTime = dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+      const card = document.createElement('div');
+      card.className = 'slot-card';
+      card.id = `slot-${slot.id}`;
+      card.innerHTML = `
+        <div class="slot-header">
+          <div>
+            <div class="slot-service">${slot.service_name}</div>
+            <div class="slot-price">${slot.price} ₪</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" class="btn-cancel-slot" onclick="handleCancelSlot(${slot.id})" title="בטל תור">✕ בטל תור</button>
+            <span class="badge open pulse">בהפצה (OPEN)</span>
+          </div>
+        </div>
+        <div class="slot-details">
+          📅 ${formattedDate} בשעה <strong>${formattedTime}</strong>
+        </div>
+      `;
+      feed.insertBefore(card, feed.firstChild);
+    }
+
+    // Slot cancellation handler
+    window.handleCancelSlot = async function(slotId) {
+      if (!confirm("האם לבטל את התור הפתוח? ממתינים לא יוכלו לתפוס אותו.")) {
+        return;
+      }
+      try {
+        const res = await fetch(`/api/v1/business/${slug}/slots/${slotId}`, {
+          method: 'DELETE',
+          headers: authHeaders(),
+        });
+        if (handleAuthError(res)) return;
+        if (res.ok) {
+          showToast("התור בוטל בהצלחה! 🛑", "התור בוטל ולא ניתן עוד לתפיסה ע\"י לקוחות.");
+          loadDashboard();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast("שגיאה בביטול התור", err.detail || "שגיאה בביטול התור", "error");
+        }
+      } catch (e) {
+        showToast("שגיאת תקשורת", "שגיאה בביטול התור, אנא נסה שוב", "error");
+      }
+    };
+
+    // Toast Notification Engine
+    let toastTimeout = null;
+
+    function showToast(title, desc, type = 'success') {
+      const toast = document.getElementById('toastNotification');
+      const titleEl = document.getElementById('toastTitle');
+      const descEl = document.getElementById('toastDesc');
+      const iconEl = document.getElementById('toastIcon');
+
+      if (toastTimeout) {
+        clearTimeout(toastTimeout);
+      }
+
+      titleEl.innerText = title;
+      descEl.innerText = desc;
+
+      toast.classList.remove('hidden', 'toast-exit', 'toast-error');
+      if (type === 'error') {
+        toast.classList.add('toast-error');
+        iconEl.innerText = '⚠️';
+      } else {
+        iconEl.innerText = '🚀';
+      }
+
+      toastTimeout = setTimeout(() => {
+        hideToast();
+      }, 4000);
+    }
+
+    function hideToast() {
+      const toast = document.getElementById('toastNotification');
+      if (!toast.classList.contains('hidden')) {
+        toast.classList.add('toast-exit');
+        setTimeout(() => {
+          toast.classList.add('hidden');
+          toast.classList.remove('toast-exit');
+        }, 300);
+      }
+    }
+
+    document.getElementById('toastCloseBtn').onclick = hideToast;
+
+    // 4. Fetch and Render Waitlist Contacts
+    async function loadWaitlist() {
+      try {
+        const res = await fetch(`/api/v1/business/${slug}/waitlist`, {
+          headers: authHeaders(),
+        });
+        if (handleAuthError(res)) return;
+        if (!res.ok) return;
+        const customers = await res.json();
+        const feed = document.getElementById('waitlistFeed');
+
+        if (!customers || customers.length === 0) {
+          feed.innerHTML = '<div class="empty-state">רשימת ההמתנה ריקה כרגע.</div>';
+          return;
+        }
+
+        feed.innerHTML = customers.map(c => `
+          <div class="customer-card">
+            <div>
+              <div class="customer-name">${c.full_name}</div>
+              <div class="customer-phone">${c.phone_number}</div>
+              <div class="customer-tags">
+                ${c.preferences_summary.map(t => `<span class="tag-pill">${t}</span>`).join('')}
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error('Failed to load waitlist:', e);
+      }
+    }
+
+    // 5. Live Candidate Preview
+    async function updateCandidatePreview() {
+      const dateVal = document.getElementById('slotDate').value;
+      const timeVal = document.getElementById('slotTime').value;
+      const svcVal = document.getElementById('serviceSelect').value;
+
+      if (!dateVal || !timeVal) return;
+
+      const isoTime = new Date(`${dateVal}T${timeVal}:00`).toISOString();
+      const isCustom = svcVal === 'custom';
+
+      try {
+        const res = await fetch(`/api/v1/business/${slug}/preview-candidates`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            service_id: isCustom ? null : (svcVal ? parseInt(svcVal, 10) : null),
+            start_time: isoTime,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('previewText').innerHTML = `
+            נמצאו <span class="preview-highlight">${data.matched_count} ממתינים מתאימים</span> ליום ${data.day_name} (${data.time_slot_label})
+          `;
+        }
+      } catch (e) {
+        console.error('Preview error:', e);
+      }
+    }
+
+    function debouncedPreview() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(updateCandidatePreview, 250);
+    }
+
+    function handleServiceChange() {
+      const isCustom = document.getElementById('serviceSelect').value === 'custom';
+      document.getElementById('customFieldsContainer').style.display = isCustom ? 'block' : 'none';
+      debouncedPreview();
+    }
+
+    document.getElementById('serviceSelect').onchange = handleServiceChange;
+    document.getElementById('slotDate').oninput = debouncedPreview;
+    document.getElementById('slotTime').oninput = debouncedPreview;
+
+    // Validation Manager for Dashboard
+    function validateIsraeliPhoneDetailed(phone) {
+      const trimmed = (phone || '').trim();
+      if (!trimmed) {
+        return { valid: false, message: 'נא להזין מספר נייד' };
+      }
+      const clean = trimmed.replace(/[\s\-\(\)]/g, '');
+      if (!/^\+?\d+$/.test(clean)) {
+        return { valid: false, message: 'מספר הטלפון יכול להכיל ספרות בלבד' };
+      }
+      if (/^0[23489]/.test(clean) || /^\+?972[23489]/.test(clean)) {
+        return { valid: false, message: 'נא להזין מספר סלולרי (מתחיל ב-05) כדי שנוכל לחבר את הוואטסאפ' };
+      }
+
+      let digits = clean;
+      if (digits.startsWith('+')) digits = digits.slice(1);
+      if (digits.startsWith('972')) digits = digits.slice(3);
+      if (digits.startsWith('0')) digits = digits.slice(1);
+
+      if (!digits.startsWith('5')) {
+        return { valid: false, message: 'נא להזין מספר סלולרי (מתחיל ב-05) כדי שנוכל לחבר את הוואטסאפ' };
+      }
+      if (digits.length < 9) {
+        return { valid: false, message: 'המספר קצר מדי. מספר נייד תקין כולל 10 ספרות (לדוגמה: 052-1234567)' };
+      }
+      if (digits.length > 9) {
+        return { valid: false, message: 'המספר ארוך מדי. מספר נייד תקין כולל 10 ספרות (לדוגמה: 052-1234567)' };
+      }
+      if (!/^5[0-9]\d{7}$/.test(digits)) {
+        return { valid: false, message: 'קידומת סלולרית לא מוכרת. מספר נייד תקין מתחיל ב-05' };
+      }
+
+      return { valid: true, cleanPhone: `0${digits}` };
+    }
+
+    function showFieldError(inputEl, message) {
+      if (!inputEl) return;
+      inputEl.classList.add('input-invalid');
+      const targetParent = inputEl.closest('.form-group') || inputEl.parentElement;
+      let errorSpan = targetParent.querySelector('.field-error-msg');
+      if (!errorSpan) {
+        errorSpan = document.createElement('span');
+        errorSpan.className = 'field-error-msg';
+        targetParent.appendChild(errorSpan);
+      }
+      errorSpan.textContent = message;
+      errorSpan.style.display = 'block';
+    }
+
+    function clearFieldError(inputEl) {
+      if (!inputEl) return;
+      inputEl.classList.remove('input-invalid');
+      const targetParent = inputEl.closest('.form-group') || inputEl.parentElement;
+      const errorSpan = targetParent.querySelector('.field-error-msg');
+      if (errorSpan) errorSpan.remove();
+    }
+
+    function validateNameField(inputEl, fieldLabel = 'שם הלקוח') {
+      const val = (inputEl.value || '').trim();
+      if (!val) {
+        showFieldError(inputEl, `נא למלא את ${fieldLabel}`);
+        return false;
+      }
+      if (val.length < 2) {
+        showFieldError(inputEl, 'השם קצר מדי, נא להזין לפחות 2 תווים');
+        return false;
+      }
+      clearFieldError(inputEl);
+      return true;
+    }
+
+    function validatePhoneField(inputEl) {
+      const res = validateIsraeliPhoneDetailed(inputEl.value);
+      if (!res.valid) {
+        showFieldError(inputEl, res.message);
+        return false;
+      }
+      clearFieldError(inputEl);
+      return true;
+    }
+
+    const customServiceNameInput = document.getElementById('customServiceName');
+    const customPriceInput = document.getElementById('customPrice');
+    const customDurationInput = document.getElementById('customDuration');
+    const slotDateInput = document.getElementById('slotDate');
+    const slotTimeInput = document.getElementById('slotTime');
+
+    customServiceNameInput.addEventListener('input', () => clearFieldError(customServiceNameInput));
+    customPriceInput.addEventListener('input', () => clearFieldError(customPriceInput));
+    customDurationInput.addEventListener('input', () => clearFieldError(customDurationInput));
+    slotDateInput.addEventListener('input', () => clearFieldError(slotDateInput));
+    slotTimeInput.addEventListener('input', () => clearFieldError(slotTimeInput));
+
+    customServiceNameInput.addEventListener('blur', () => {
+      if (document.getElementById('serviceSelect').value === 'custom' && !customServiceNameInput.value.trim()) {
+        showFieldError(customServiceNameInput, "נא לתת שם לשירות (למשל: טיפול זוהר אקספרס)");
+      }
+    });
+
+    customPriceInput.addEventListener('blur', () => {
+      if (document.getElementById('serviceSelect').value === 'custom') {
+        const p = parseFloat(customPriceInput.value);
+        if (customPriceInput.value.trim() === '' || isNaN(p) || p < 0) {
+          showFieldError(customPriceInput, "נא להזין מחיר (או 0 אם השירות ללא עלות)");
+        }
+      }
+    });
+
+    customDurationInput.addEventListener('blur', () => {
+      if (document.getElementById('serviceSelect').value === 'custom') {
+        const d = parseInt(customDurationInput.value, 10);
+        if (customDurationInput.value.trim() && (isNaN(d) || d < 5)) {
+          showFieldError(customDurationInput, "משך הטיפול חייב להיות לפחות 5 דקות");
+        }
+      }
+    });
+
+    // 6. Submit Quick Publish Slot
+    document.getElementById('quickPublishForm').onsubmit = async (e) => {
+      e.preventDefault();
+
+      const svcVal = document.getElementById('serviceSelect').value;
+      const isCustom = svcVal === 'custom';
+      const dateVal = slotDateInput.value;
+      const timeVal = slotTimeInput.value;
+
+      let hasError = false;
+      let firstErrorEl = null;
+
+      if (!dateVal) {
+        showFieldError(slotDateInput, 'נא לבחור תאריך');
+        hasError = true;
+        firstErrorEl = firstErrorEl || slotDateInput;
+      }
+      if (!timeVal) {
+        showFieldError(slotTimeInput, 'נא לבחור שעה');
+        hasError = true;
+        firstErrorEl = firstErrorEl || slotTimeInput;
+      }
+
+      let customServiceName = null;
+      let customPrice = null;
+      let durationMinutes = null;
+
+      if (isCustom) {
+        const cName = customServiceNameInput.value.trim();
+        const cPriceStr = customPriceInput.value.trim();
+        const cPrice = parseFloat(cPriceStr);
+        const cDurStr = customDurationInput.value.trim();
+        const cDur = parseInt(cDurStr, 10);
+
+        if (!cName) {
+          showFieldError(customServiceNameInput, 'נא לתת שם לשירות (למשל: טיפול זוהר אקספרס)');
+          hasError = true;
+          firstErrorEl = firstErrorEl || customServiceNameInput;
+        }
+
+        if (cPriceStr === '' || isNaN(cPrice) || cPrice < 0) {
+          showFieldError(customPriceInput, 'נא להזין מחיר (או 0 אם השירות ללא עלות)');
+          hasError = true;
+          firstErrorEl = firstErrorEl || customPriceInput;
+        }
+
+        if (cDurStr && (isNaN(cDur) || cDur < 5)) {
+          showFieldError(customDurationInput, 'משך הטיפול חייב להיות לפחות 5 דקות');
+          hasError = true;
+          firstErrorEl = firstErrorEl || customDurationInput;
+        }
+
+        customServiceName = cName;
+        customPrice = isNaN(cPrice) ? null : cPrice;
+        durationMinutes = isNaN(cDur) ? 60 : cDur;
+      }
+
+      if (hasError) {
+        if (firstErrorEl) firstErrorEl.focus();
+        return;
+      }
+
+      const isoTime = new Date(`${dateVal}T${timeVal}:00`).toISOString();
+
+      const btn = document.getElementById('submitPublishBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> <span>מפיץ התראות לוואטסאפ... ⏳</span>';
+
+      const payload = {
+        start_time: isoTime,
+      };
+
+      if (isCustom) {
+        payload.service_id = null;
+        payload.custom_service_name = customServiceName;
+        if (customPrice !== null) payload.custom_price = customPrice;
+        if (durationMinutes) payload.duration_minutes = durationMinutes;
+      } else {
+        payload.service_id = parseInt(svcVal, 10);
+      }
+
+      try {
+        const res = await fetch(`/api/v1/business/${slug}/quick-publish`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload),
+        });
+
+        if (handleAuthError(res)) return;
+
+        if (res.ok) {
+          const data = await res.json();
+
+          // 1. Close modal smoothly
+          document.getElementById('publishModal').classList.remove('active');
+
+          // 2. Prepend newly created slot to Recent Activity feed immediately
+          const chosenService = isCustom
+            ? { name: customServiceName, price: customPrice || 0 }
+            : (servicesList.find(s => s.id === payload.service_id) || { name: 'שירות', price: 0 });
+
+          prependOptimisticSlot({
+            id: data.slot_id,
+            service_name: chosenService.name,
+            price: chosenService.price,
+            start_time: isoTime,
+          });
+
+          // 3. Display animated prominent Toast notification
+          const count = data.eligible_recipients ?? data.total_matched ?? 0;
+          showToast(
+            'התור הופץ בהצלחה! 🚀',
+            `נשלחה התראה ל-${count} ממתינים מתאימים בוואטסאפ.`
+          );
+
+          // 4. Background refresh of metrics
+          loadDashboard();
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          let errMsg = 'שגיאה בפרסום התור, אנא נסה שוב';
+          if (Array.isArray(errData.detail)) {
+            errData.detail.forEach(d => {
+              const fld = d.loc ? d.loc[d.loc.length - 1] : '';
+              if (fld === 'custom_service_name') showFieldError(customServiceNameInput, 'נא להזין שם שירות תקין');
+              if (fld === 'custom_price') showFieldError(customPriceInput, 'נא להזין מחיר תקין');
+            });
+          }
+          if (typeof errData.detail === 'string') errMsg = errData.detail;
+          showToast('שגיאה בפרסום התור', errMsg, 'error');
+        }
+      } catch (err) {
+        showToast('שגיאה בפרסום התור', 'שגיאה בפרסום התור, אנא נסה שוב', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>שלח התראה לכל הממתינים עכשיו!</span><span>📢</span>';
+      }
+    };
+
+    // 7. Tabs Switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+
+        if (btn.dataset.tab === 'waitlistTab') {
+          loadWaitlist();
+        }
+      };
+    });
+
+    // 8. Modals handling
+    document.getElementById('openPublishModalBtn').onclick = () => {
+      document.getElementById('publishModal').classList.add('active');
+      updateCandidatePreview();
+    };
+    document.getElementById('closePublishModal').onclick = () => {
+      document.getElementById('publishModal').classList.remove('active');
+    };
+
+    // Helper to render services in customer modal
+    function renderCustomerModalServices() {
+      const container = document.getElementById('custServicesContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      if (!servicesList || servicesList.length === 0) {
+        container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">כל השירותים</span>';
+        return;
+      }
+      servicesList.forEach(s => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.dataset.id = s.id;
+        chip.innerHTML = `<span>+</span> <span>${s.name} (${s.price} ₪)</span>`;
+        chip.onclick = () => {
+          chip.classList.toggle('active');
+          chip.classList.toggle('selected');
+          const span = chip.querySelector('span');
+          span.innerText = chip.classList.contains('active') ? '✓' : '+';
+          document.getElementById('custFormError').style.display = 'none';
+        };
+        container.appendChild(chip);
+      });
+    }
+
+    // Customer Modal Day & Time Toggles
+    document.getElementById('custSelectAllDays').onclick = () => {
+      document.querySelectorAll('#custDaysGrid .day-btn').forEach(btn => btn.classList.add('active', 'selected'));
+      document.getElementById('custFormError').style.display = 'none';
+    };
+    document.getElementById('custClearAllDays').onclick = () => {
+      document.querySelectorAll('#custDaysGrid .day-btn').forEach(btn => btn.classList.remove('active', 'selected'));
+    };
+    const custNameInput = document.getElementById('custName');
+    const custPhoneInput = document.getElementById('custPhone');
+    const custDaysGrid = document.getElementById('custDaysGrid');
+    const custSlotsStack = document.getElementById('custSlotsStack');
+
+    custNameInput.addEventListener('input', () => clearFieldError(custNameInput));
+    custNameInput.addEventListener('blur', () => validateNameField(custNameInput, 'שם הלקוח'));
+
+    custPhoneInput.addEventListener('input', () => clearFieldError(custPhoneInput));
+    custPhoneInput.addEventListener('blur', () => validatePhoneField(custPhoneInput));
+
+    function clearCustChipsErrors() {
+      custDaysGrid.classList.remove('chips-invalid');
+      custSlotsStack.classList.remove('chips-invalid');
+      document.getElementById('custFormError').style.display = 'none';
+    }
+
+    document.getElementById('custSelectAllDays').onclick = () => {
+      document.querySelectorAll('#custDaysGrid .day-btn').forEach(btn => btn.classList.add('active', 'selected'));
+      clearCustChipsErrors();
+    };
+    document.getElementById('custClearAllDays').onclick = () => {
+      document.querySelectorAll('#custDaysGrid .day-btn').forEach(btn => btn.classList.remove('active', 'selected'));
+    };
+    document.querySelectorAll('#custDaysGrid .day-btn').forEach(btn => {
+      btn.onclick = () => {
+        btn.classList.toggle('active');
+        btn.classList.toggle('selected');
+        clearCustChipsErrors();
+      };
+    });
+
+    document.getElementById('custSelectAllSlots').onclick = () => {
+      document.querySelectorAll('#custSlotsStack .slot-btn').forEach(btn => btn.classList.add('active', 'selected'));
+      clearCustChipsErrors();
+    };
+    document.getElementById('custClearAllSlots').onclick = () => {
+      document.querySelectorAll('#custSlotsStack .slot-btn').forEach(btn => btn.classList.remove('active', 'selected'));
+    };
+    document.querySelectorAll('#custSlotsStack .slot-btn').forEach(btn => {
+      btn.onclick = () => {
+        btn.classList.toggle('active');
+        btn.classList.toggle('selected');
+        clearCustChipsErrors();
+      };
+    });
+
+    document.getElementById('openAddCustomerBtn').onclick = () => {
+      renderCustomerModalServices();
+      // Clean-slate: reset days and time slots
+      document.querySelectorAll('#custDaysGrid .day-btn').forEach(btn => btn.classList.remove('active', 'selected'));
+      document.querySelectorAll('#custSlotsStack .slot-btn').forEach(btn => btn.classList.remove('active', 'selected'));
+      document.getElementById('addCustomerForm').reset();
+      clearFieldError(custNameInput);
+      clearFieldError(custPhoneInput);
+      clearCustChipsErrors();
+      document.getElementById('customerModal').classList.add('active');
+    };
+    document.getElementById('closeCustomerModal').onclick = () => {
+      document.getElementById('customerModal').classList.remove('active');
+    };
+
+    // QR Code Print Modal handlers
+    document.getElementById('openQrKitBtn').onclick = () => {
+      const bizTitle = document.getElementById('bizTitle').innerText || 'הקליניקה';
+      document.getElementById('posterBizName').innerText = bizTitle;
+      const optinUrl = `${window.location.origin}/b/${slug}`;
+      const qrContainer = document.getElementById('posterQrContainer');
+      if (window.generateQrSvg) {
+        window.generateQrSvg(optinUrl, qrContainer, 200);
+      } else {
+        qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(optinUrl)}" alt="QR Code" width="200" height="200" />`;
+      }
+      document.getElementById('qrPrintModal').classList.add('active');
+    };
+
+    document.getElementById('closeQrPrintModal').onclick = () => {
+      document.getElementById('qrPrintModal').classList.remove('active');
+    };
+
+    document.getElementById('printNowBtn').onclick = () => {
+      window.print();
+    };
+
+    // 9. Manual Add Customer Submit
+    document.getElementById('addCustomerForm').onsubmit = async (e) => {
+      e.preventDefault();
+      clearCustChipsErrors();
+
+      let hasError = false;
+      let firstErrorEl = null;
+
+      if (!validateNameField(custNameInput, 'שם הלקוח')) {
+        hasError = true;
+        firstErrorEl = firstErrorEl || custNameInput;
+      }
+
+      if (!validatePhoneField(custPhoneInput)) {
+        hasError = true;
+        firstErrorEl = firstErrorEl || custPhoneInput;
+      }
+
+      const selectedDays = Array.from(document.querySelectorAll('#custDaysGrid .day-btn.active'))
+        .map(b => parseInt(b.dataset.day, 10));
+      const selectedSlots = Array.from(document.querySelectorAll('#custSlotsStack .slot-btn.active'))
+        .map(b => b.dataset.slot);
+
+      const errEl = document.getElementById('custFormError');
+
+      if (selectedDays.length === 0 || selectedSlots.length === 0) {
+        if (selectedDays.length === 0) custDaysGrid.classList.add('chips-invalid');
+        if (selectedSlots.length === 0) custSlotsStack.classList.add('chips-invalid');
+        errEl.innerText = 'אנא בחרו לפחות יום אחד ושעת הגעה שנוחה לכם כדי שנוכל להתאים עבורכם ביטולים';
+        errEl.style.display = 'block';
+        hasError = true;
+        firstErrorEl = firstErrorEl || (selectedDays.length === 0 ? custDaysGrid : custSlotsStack);
+      }
+
+      if (hasError) {
+        if (firstErrorEl && typeof firstErrorEl.focus === 'function') firstErrorEl.focus();
+        return;
+      }
+
+      const selectedServices = Array.from(document.querySelectorAll('#custServicesContainer .chip.active'))
+        .map(c => parseInt(c.dataset.id, 10));
+
+      const submitBtn = document.getElementById('submitAddCustBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span> <span>מוסיף לקוח...</span>';
+
+      try {
+        const res = await fetch(`/api/v1/business/${slug}/customers`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            full_name: custNameInput.value.trim(),
+            phone_number: custPhoneInput.value.trim(),
+            service_ids: selectedServices,
+            days_of_week: selectedDays,
+            time_slots: selectedSlots,
+          }),
+        });
+
+        if (handleAuthError(res)) return;
+
+        if (res.ok) {
+          document.getElementById('customerModal').classList.remove('active');
+          document.getElementById('addCustomerForm').reset();
+          clearFieldError(custNameInput);
+          clearFieldError(custPhoneInput);
+          showToast('הלקוח נוסף בהצלחה! ✨', 'הלקוח והעדפותיו נשמרו ברשימת ההמתנה.');
+          loadDashboard();
+          loadWaitlist();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          let mappedServerError = false;
+          if (Array.isArray(err.detail)) {
+            err.detail.forEach(item => {
+              const f = item.loc ? item.loc[item.loc.length - 1] : '';
+              if (f === 'phone_number') {
+                showFieldError(custPhoneInput, 'נא להזין מספר סלולרי תקין (מתחיל ב-05) בן 10 ספרות');
+                firstErrorEl = firstErrorEl || custPhoneInput;
+                mappedServerError = true;
+              } else if (f === 'full_name' || f === 'name') {
+                showFieldError(custNameInput, 'השם קצר מדי, נא להזין לפחות 2 תווים');
+                firstErrorEl = firstErrorEl || custNameInput;
+                mappedServerError = true;
+              }
+            });
+          }
+
+          if (err.field_errors) {
+            for (const [fld, msg] of Object.entries(err.field_errors)) {
+              if (fld === 'phone_number') {
+                showFieldError(custPhoneInput, msg);
+                firstErrorEl = firstErrorEl || custPhoneInput;
+                mappedServerError = true;
+              } else if (fld === 'full_name' || fld === 'name') {
+                showFieldError(custNameInput, msg);
+                firstErrorEl = firstErrorEl || custNameInput;
+                mappedServerError = true;
+              }
+            }
+          }
+
+          if (mappedServerError && firstErrorEl) {
+            if (typeof firstErrorEl.focus === 'function') firstErrorEl.focus();
+            return;
+          }
+
+          errEl.innerText = typeof err.detail === 'string' ? err.detail : (err.message || 'שגיאה בהוספת לקוח.');
+          errEl.style.display = 'block';
+        }
+      } catch (e) {
+        errEl.innerText = 'שגיאת תקשורת.';
+        errEl.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>הוסף לרשימת ההמתנה</span><span>✨</span>';
+      }
+    };
+
+    // 10. Logout Button
+    document.getElementById('logoutBtn').onclick = () => {
+      localStorage.removeItem('slotalert_token');
+      window.location.href = `/login/${slug}`;
+    };
+
+    // Initial load
+    loadDashboard();
+    loadServices();
+  </script>
+</body>
+</html>

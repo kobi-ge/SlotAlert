@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>הצטרפות לרשימת המתנה | SlotAlert</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="הירשמו לרשימת ההמתנה וקבלו התראה מיידית בוואטסאפ כשתור מתפנה.">
+</head>
+<body>
+  <div class="container" id="appContainer">
+    <!-- Header -->
+    <div class="header">
+      <div class="brand-badge">⚡ תור פנוי ברגע האחרון</div>
+      <h1 class="business-name" id="bizName">טוען פרטים...</h1>
+      <p class="business-tagline" id="bizTagline">הירשמו להתראות וואטסאפ מיידיות על ביטולים ותורים פנויים</p>
+    </div>
+
+    <!-- Registration Form -->
+    <form id="optinForm" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="fullName">שם מלא</label>
+        <input type="text" id="fullName" class="input-field" placeholder="למשל: דנה לוי" required autocomplete="name">
+        <div class="error-msg" id="nameError">נא להזין שם מלא</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="phone">מספר וואטסאפ</label>
+        <div class="phone-wrapper">
+          <input type="tel" id="phone" class="input-field" placeholder="050-1234567" required autocomplete="tel">
+        </div>
+        <div class="error-msg" id="phoneError">נא להזין מספר טלפון נייד תקין</div>
+      </div>
+
+      <!-- Services Selection -->
+      <div class="form-group">
+        <label class="form-label">שירותים מבוקשים (ניתן לבחור מספר)</label>
+        <div class="chip-group" id="servicesContainer">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Preferred Days -->
+      <div class="form-group">
+        <div class="label-row">
+          <label class="form-label">ימים מועדפים</label>
+          <div class="helper-group">
+            <button type="button" class="helper-toggle-btn" id="selectAllDays">בחר הכל</button>
+            <span class="helper-divider">|</span>
+            <button type="button" class="helper-toggle-btn" id="clearAllDays">נקה הכל</button>
+          </div>
+        </div>
+        <div class="days-grid" id="daysGrid">
+          <button type="button" class="day-btn" data-day="0">א'</button>
+          <button type="button" class="day-btn" data-day="1">ב'</button>
+          <button type="button" class="day-btn" data-day="2">ג'</button>
+          <button type="button" class="day-btn" data-day="3">ד'</button>
+          <button type="button" class="day-btn" data-day="4">ה'</button>
+          <button type="button" class="day-btn" data-day="5">ו'</button>
+        </div>
+      </div>
+
+      <!-- Time Slots -->
+      <div class="form-group">
+        <div class="label-row">
+          <label class="form-label">שעות נוחות</label>
+          <div class="helper-group">
+            <button type="button" class="helper-toggle-btn" id="selectAllSlots">כל השעות</button>
+            <span class="helper-divider">|</span>
+            <button type="button" class="helper-toggle-btn" id="clearAllSlots">נקה</button>
+          </div>
+        </div>
+        <div class="slots-stack" id="slotsStack">
+          <div class="slot-btn" data-slot="MORNING">
+            <span class="slot-name">🌅 בוקר</span>
+            <span class="slot-hours">08:00 - 12:00</span>
+          </div>
+          <div class="slot-btn" data-slot="AFTERNOON">
+            <span class="slot-name">☀️ צהריים</span>
+            <span class="slot-hours">12:00 - 16:00</span>
+          </div>
+          <div class="slot-btn" data-slot="EVENING">
+            <span class="slot-name">🌙 ערב</span>
+            <span class="slot-hours">16:00 - 21:00</span>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <span>הצטרף לרשימת ההמתנה</span>
+        <span>✨</span>
+      </button>
+      <div class="error-msg" id="generalError" style="text-align: center; margin-top: 10px;"></div>
+    </form>
+
+    <!-- Success Screen State -->
+    <div class="success-card" id="successCard">
+      <div class="success-icon">✓</div>
+      <h2 class="success-title">מעולה! נרשמת בהצלחה</h2>
+      <p class="success-desc">
+        שלחנו לך עכשיו הודעת אישור בוואטסאפ.<br>
+        ברגע שיתפנה תור שמתאים להעדפותיך, נשלח לך התראה מיידית לתפיסת התור!
+      </p>
+      <button type="button" class="btn-submit" style="background: rgba(255,255,255,0.1); box-shadow: none;" onclick="location.reload()">
+        סגור חלון
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Extract slug from URL path /b/{slug}
+    const pathParts = window.location.pathname.split('/');
+    const slugIndex = pathParts.indexOf('b');
+    const slug = slugIndex !== -1 && pathParts[slugIndex + 1] ? pathParts[slugIndex + 1] : 'shiran-clinic';
+
+    let availableServices = [];
+
+    // 1. Fetch Business Profile
+    async function loadBusinessData() {
+      try {
+        const res = await fetch(`/api/v1/public/b/${slug}`);
+        if (!res.ok) {
+          document.getElementById('bizName').innerText = 'עסק לא נמצא';
+          document.getElementById('bizTagline').innerText = 'קישור ההרשמה אינו תקין או שהעסק אינו פעיל.';
+          document.getElementById('optinForm').style.display = 'none';
+          return;
+        }
+
+        const data = await res.json();
+        document.getElementById('bizName').innerText = data.name;
+        document.title = `${data.name} | הצטרפות לרשימת המתנה`;
+
+        availableServices = data.services || [];
+        renderServices(availableServices);
+      } catch (err) {
+        console.error('Error loading business:', err);
+      }
+    }
+
+    // 2. Render Services Chips
+    function renderServices(services) {
+      const container = document.getElementById('servicesContainer');
+      container.innerHTML = '';
+
+      if (services.length === 0) {
+        container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.9rem;">כל השירותים</span>';
+        return;
+      }
+
+      services.forEach(svc => {
+        const chip = document.createElement('div');
+        chip.className = 'chip active';
+        chip.dataset.id = svc.id;
+        chip.innerHTML = `<span>✓</span> <span>${svc.name} (${svc.price} ₪)</span>`;
+        chip.onclick = () => {
+          chip.classList.toggle('active');
+          const check = chip.querySelector('span');
+          check.innerText = chip.classList.contains('active') ? '✓' : '+';
+        };
+        container.appendChild(chip);
+      });
+    }
+
+    // Convenience Toggles: Days
+    document.getElementById('selectAllDays').onclick = () => {
+      document.querySelectorAll('.day-btn').forEach(btn => {
+        btn.classList.add('active', 'selected');
+      });
+      document.getElementById('generalError').style.display = 'none';
+    };
+    document.getElementById('clearAllDays').onclick = () => {
+      document.querySelectorAll('.day-btn').forEach(btn => {
+        btn.classList.remove('active', 'selected');
+      });
+    };
+
+    // Convenience Toggles: Time slots
+    document.getElementById('selectAllSlots').onclick = () => {
+      document.querySelectorAll('.slot-btn').forEach(btn => {
+        btn.classList.add('active', 'selected');
+      });
+      document.getElementById('generalError').style.display = 'none';
+    };
+    document.getElementById('clearAllSlots').onclick = () => {
+      document.querySelectorAll('.slot-btn').forEach(btn => {
+        btn.classList.remove('active', 'selected');
+      });
+    };
+
+    // 3. Day buttons toggle
+    document.querySelectorAll('.day-btn').forEach(btn => {
+      btn.onclick = () => {
+        btn.classList.toggle('active');
+        btn.classList.toggle('selected');
+        document.getElementById('generalError').style.display = 'none';
+      };
+    });
+
+    // 4. Time slot buttons toggle
+    document.querySelectorAll('.slot-btn').forEach(btn => {
+      btn.onclick = () => {
+        btn.classList.toggle('active');
+        btn.classList.toggle('selected');
+        document.getElementById('generalError').style.display = 'none';
+      };
+    });
+
+    // Inline Validation Manager
+    function validateIsraeliPhoneDetailed(phone) {
+      const trimmed = (phone || '').trim();
+      if (!trimmed) {
+        return { valid: false, message: 'נא להזין מספר נייד' };
+      }
+      const clean = trimmed.replace(/[\s\-\(\)]/g, '');
+      if (!/^\+?\d+$/.test(clean)) {
+        return { valid: false, message: 'מספר הטלפון יכול להכיל ספרות בלבד' };
+      }
+      if (/^0[23489]/.test(clean) || /^\+?972[23489]/.test(clean)) {
+        return { valid: false, message: 'נא להזין מספר סלולרי (מתחיל ב-05) כדי שנוכל לחבר את הוואטסאפ' };
+      }
+
+      let digits = clean;
+      if (digits.startsWith('+')) digits = digits.slice(1);
+      if (digits.startsWith('972')) digits = digits.slice(3);
+      if (digits.startsWith('0')) digits = digits.slice(1);
+
+      if (!digits.startsWith('5')) {
+        return { valid: false, message: 'נא להזין מספר סלולרי (מתחיל ב-05) כדי שנוכל לחבר את הוואטסאפ' };
+      }
+      if (digits.length < 9) {
+        return { valid: false, message: 'המספר קצר מדי. מספר נייד תקין כולל 10 ספרות (לדוגמה: 052-1234567)' };
+      }
+      if (digits.length > 9) {
+        return { valid: false, message: 'המספר ארוך מדי. מספר נייד תקין כולל 10 ספרות (לדוגמה: 052-1234567)' };
+      }
+      if (!/^5[0-9]\d{7}$/.test(digits)) {
+        return { valid: false, message: 'קידומת סלולרית לא מוכרת. מספר נייד תקין מתחיל ב-05' };
+      }
+
+      return { valid: true, cleanPhone: `0${digits}` };
+    }
+
+    function showFieldError(inputEl, message) {
+      if (!inputEl) return;
+      inputEl.classList.add('input-invalid');
+      const targetParent = inputEl.closest('.form-group') || inputEl.parentElement;
+      let errorSpan = targetParent.querySelector('.field-error-msg');
+      if (!errorSpan) {
+        errorSpan = document.createElement('span');
+        errorSpan.className = 'field-error-msg';
+        targetParent.appendChild(errorSpan);
+      }
+      errorSpan.textContent = message;
+      errorSpan.style.display = 'block';
+    }
+
+    function clearFieldError(inputEl) {
+      if (!inputEl) return;
+      inputEl.classList.remove('input-invalid');
+      const targetParent = inputEl.closest('.form-group') || inputEl.parentElement;
+      const errorSpan = targetParent.querySelector('.field-error-msg');
+      if (errorSpan) errorSpan.remove();
+    }
+
+    function validateNameField(inputEl) {
+      const val = (inputEl.value || '').trim();
+      if (!val) {
+        showFieldError(inputEl, 'נא למלא את שמך המלא');
+        return false;
+      }
+      if (val.length < 2) {
+        showFieldError(inputEl, 'השם קצר מדי, נא להזין לפחות 2 תווים');
+        return false;
+      }
+      clearFieldError(inputEl);
+      return true;
+    }
+
+    function validatePhoneField(inputEl) {
+      const res = validateIsraeliPhoneDetailed(inputEl.value);
+      if (!res.valid) {
+        showFieldError(inputEl, res.message);
+        return false;
+      }
+      clearFieldError(inputEl);
+      return true;
+    }
+
+    const fullNameInput = document.getElementById('fullName');
+    const phoneInput = document.getElementById('phone');
+    const daysGrid = document.getElementById('daysGrid');
+    const slotsStack = document.getElementById('slotsStack');
+
+    fullNameInput.addEventListener('input', () => clearFieldError(fullNameInput));
+    fullNameInput.addEventListener('blur', () => validateNameField(fullNameInput));
+
+    phoneInput.addEventListener('input', () => clearFieldError(phoneInput));
+    phoneInput.addEventListener('blur', () => validatePhoneField(phoneInput));
+
+    function clearChipsErrors() {
+      daysGrid.classList.remove('chips-invalid');
+      slotsStack.classList.remove('chips-invalid');
+      document.getElementById('generalError').style.display = 'none';
+    }
+
+    // Attach clear listeners to chip selection
+    document.querySelectorAll('.day-btn, #selectAllDays, #clearAllDays').forEach(btn => {
+      btn.addEventListener('click', clearChipsErrors);
+    });
+    document.querySelectorAll('.slot-btn, #selectAllSlots, #clearAllSlots').forEach(btn => {
+      btn.addEventListener('click', clearChipsErrors);
+    });
+
+    // 5. Submit Registration
+    document.getElementById('optinForm').onsubmit = async (e) => {
+      e.preventDefault();
+      clearChipsErrors();
+
+      let hasError = false;
+      let firstErrorEl = null;
+
+      if (!validateNameField(fullNameInput)) {
+        hasError = true;
+        firstErrorEl = firstErrorEl || fullNameInput;
+      }
+
+      if (!validatePhoneField(phoneInput)) {
+        hasError = true;
+        firstErrorEl = firstErrorEl || phoneInput;
+      }
+
+      // Collect Days
+      const selectedDays = Array.from(document.querySelectorAll('.day-btn.active, .day-btn.selected, .day-chip.selected'))
+        .map(b => parseInt(b.dataset.day, 10));
+
+      // Collect Slots
+      const selectedSlots = Array.from(document.querySelectorAll('.slot-btn.active, .slot-btn.selected, .time-chip.selected'))
+        .map(b => b.dataset.slot);
+
+      const generalErr = document.getElementById('generalError');
+
+      if (selectedDays.length === 0 || selectedSlots.length === 0) {
+        if (selectedDays.length === 0) daysGrid.classList.add('chips-invalid');
+        if (selectedSlots.length === 0) slotsStack.classList.add('chips-invalid');
+        
+        generalErr.innerText = 'אנא בחרו לפחות יום אחד ושעת הגעה שנוחה לכם כדי שנוכל להתאים עבורכם ביטולים';
+        generalErr.style.display = 'block';
+        hasError = true;
+        firstErrorEl = firstErrorEl || (selectedDays.length === 0 ? daysGrid : slotsStack);
+      }
+
+      if (hasError) {
+        if (firstErrorEl) {
+          firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (typeof firstErrorEl.focus === 'function') firstErrorEl.focus();
+        }
+        return;
+      }
+
+      // Collect Services (if none active, send empty list = any service)
+      const selectedServices = Array.from(document.querySelectorAll('#servicesContainer .chip.active'))
+        .map(c => parseInt(c.dataset.id, 10));
+
+      const payload = {
+        full_name: fullNameInput.value.trim(),
+        phone_number: phoneInput.value.trim(),
+        service_ids: selectedServices,
+        days_of_week: selectedDays,
+        time_slots: selectedSlots,
+      };
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+
+      try {
+        const res = await fetch(`/api/v1/public/b/${slug}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          document.getElementById('optinForm').style.display = 'none';
+          document.getElementById('successCard').style.display = 'block';
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = '<span>הצטרף לרשימת ההמתנה</span><span>✨</span>';
+
+          let mappedServerError = false;
+          if (Array.isArray(data.detail)) {
+            data.detail.forEach(item => {
+              const field = item.loc ? item.loc[item.loc.length - 1] : '';
+              if (field === 'phone_number') {
+                showFieldError(phoneInput, 'נא להזין מספר סלולרי תקין (מתחיל ב-05) בן 10 ספרות');
+                firstErrorEl = firstErrorEl || phoneInput;
+                mappedServerError = true;
+              } else if (field === 'full_name' || field === 'name') {
+                showFieldError(fullNameInput, 'השם קצר מדי, נא להזין לפחות 2 תווים');
+                firstErrorEl = firstErrorEl || fullNameInput;
+                mappedServerError = true;
+              }
+            });
+          }
+
+          if (data.field_errors) {
+            for (const [fld, msg] of Object.entries(data.field_errors)) {
+              if (fld === 'phone_number') {
+                showFieldError(phoneInput, msg);
+                firstErrorEl = firstErrorEl || phoneInput;
+                mappedServerError = true;
+              } else if (fld === 'full_name' || fld === 'name') {
+                showFieldError(fullNameInput, msg);
+                firstErrorEl = firstErrorEl || fullNameInput;
+                mappedServerError = true;
+              }
+            }
+          }
+
+          if (mappedServerError && firstErrorEl) {
+            firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (typeof firstErrorEl.focus === 'function') firstErrorEl.focus();
+            return;
+          }
+
+          generalErr.innerText = typeof data.detail === 'string' ? data.detail : (data.message || 'אירעה שגיאה ברישום. נסו שוב.');
+          generalErr.style.display = 'block';
+        }
+      } catch (err) {
+        generalErr.innerText = 'שגיאת תקשורת. בדקו את החיבור לרשת.';
+        generalErr.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<span>הצטרף לרשימת ההמתנה</span><span>✨</span>';
+      }
+    };
+
+    // Load data on startup
+    loadBusinessData();
+  </script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+services:
+  # ==========================================
+  # SlotAlert ASGI Application
+  # ==========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: slotalert:latest
+    restart: unless-stopped
+    env_file:
+      - path: .env.production
+        required: false
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-slotalert_prod}:${POSTGRES_PASSWORD:-ChangeThisToAStrongProdPassword_987!}@postgres:5432/${POSTGRES_DB:-slotalert_production}
+      - REDIS_URL=redis://redis:6379/0
+      - WEB_CONCURRENCY=${WEB_CONCURRENCY:-4}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - internal_net
+
+  # ==========================================
+  # Production Database (PostgreSQL 16)
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-slotalert_prod}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeThisToAStrongProdPassword_987!}
+      POSTGRES_DB: ${POSTGRES_DB:-slotalert_production}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-slotalert_prod} -d ${POSTGRES_DB:-slotalert_production}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal_net
+
+  # ==========================================
+  # Cache & Background Task Queue (Redis 7)
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy noeviction
+    volumes:
+      - redis_prod_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - internal_net
+
+  # ==========================================
+  # Edge Reverse Proxy & Automatic SSL (Caddy)
+  # ==========================================
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - internal_net
+
+networks:
+  internal_net:
+    driver: bridge
+
+volumes:
+  postgres_prod_data:
+  redis_prod_data:
+  caddy_data:
+  caddy_config:

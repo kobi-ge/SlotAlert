@@ -1,0 +1,26 @@
+# Virtual environments and caches
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Git and IDE
+.git/
+.gitignore
+.dockerignore
+.idea/
+.vscode/
+
+# Local configuration and testing
+.env
+tests/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
