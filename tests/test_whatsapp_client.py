@@ -236,3 +236,55 @@ async def test_mark_as_read_payload():
         assert called_payload["message_id"] == "wamid.12345"
 
     await client.close()
+
+
+def test_factory_provider_resolution(monkeypatch):
+    """Verify factory properly resolves to WhatsAppCloudAPIClient or MockMessageProvider."""
+    from pydantic import SecretStr
+    from src.config.settings import get_settings
+    from src.services.messaging.factory import (
+        get_configured_message_provider,
+        reset_provider_instance,
+    )
+    from src.services.messaging.mock_provider import MockMessageProvider
+
+    settings = get_settings()
+
+    # 1. Default in testing -> MockMessageProvider
+    reset_provider_instance()
+    monkeypatch.setattr(settings, "WHATSAPP_PROVIDER", "mock")
+    prov_mock = get_configured_message_provider()
+    assert isinstance(prov_mock, MockMessageProvider)
+
+    # 2. In production with credentials -> automatically resolves to WhatsAppCloudAPIClient
+    reset_provider_instance()
+    monkeypatch.setattr(settings, "WHATSAPP_PROVIDER", None)
+    monkeypatch.setattr(settings, "APP_ENV", "production")
+    monkeypatch.setattr(settings, "WHATSAPP_ACCESS_TOKEN", SecretStr("test_token_123"))
+    monkeypatch.setattr(settings, "WHATSAPP_PHONE_NUMBER_ID", "987654321")
+    prov_meta = get_configured_message_provider()
+    assert isinstance(prov_meta, WhatsAppCloudAPIClient)
+
+    # 3. Explicit WHATSAPP_PROVIDER=meta -> resolves to WhatsAppCloudAPIClient
+    reset_provider_instance()
+    monkeypatch.setattr(settings, "WHATSAPP_PROVIDER", "meta")
+    prov_explicit_meta = get_configured_message_provider()
+    assert isinstance(prov_explicit_meta, WhatsAppCloudAPIClient)
+
+    # Cleanup
+    reset_provider_instance()
+
+
+def test_database_url_normalization():
+    """Verify DATABASE_URL automatically normalizes postgresql:// to postgresql+asyncpg://."""
+    from src.config.settings import Settings
+
+    s1 = Settings(DATABASE_URL="postgresql://user:pass@host:5432/db")
+    assert s1.DATABASE_URL == "postgresql+asyncpg://user:pass@host:5432/db"
+
+    s2 = Settings(DATABASE_URL="postgres://user:pass@host:5432/db")
+    assert s2.DATABASE_URL == "postgresql+asyncpg://user:pass@host:5432/db"
+
+    s3 = Settings(DATABASE_URL="postgresql+asyncpg://user:pass@host:5432/db")
+    assert s3.DATABASE_URL == "postgresql+asyncpg://user:pass@host:5432/db"
+

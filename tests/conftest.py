@@ -46,6 +46,18 @@ async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest_asyncio.fixture(autouse=True)
+def setup_test_environment(monkeypatch):
+    """Ensure tests always run with MockMessageProvider and test environment."""
+    from src.services.messaging.factory import reset_provider_instance
+    monkeypatch.setattr(settings, "WHATSAPP_PROVIDER", "mock")
+    monkeypatch.setattr(settings, "APP_ENV", "test")
+    monkeypatch.setattr(settings, "WHATSAPP_APP_SECRET", None)
+    reset_provider_instance()
+    yield
+    reset_provider_instance()
+
+
+@pytest_asyncio.fixture(autouse=True)
 def override_db_dependency():
     """Automatically override FastAPI get_db dependency for all tests."""
     app.dependency_overrides[get_db] = override_get_db

@@ -9,7 +9,8 @@ from src.database.connection import AsyncSessionLocal
 from src.models.broadcast_log import BroadcastLog
 from src.models.customer import Customer
 from src.models.slot import Slot, SlotStatus
-from src.services.messaging import get_message_provider, increment_customer_alert_count
+from src.services.messaging.factory import get_configured_message_provider
+from src.services.messaging.spam_guard import increment_customer_alert_count
 from src.tasks.queue import task_queue
 
 logger = logging.getLogger("slotalert.tasks.broadcast")
@@ -26,7 +27,7 @@ async def send_slot_broadcast_task(
     Persists dispatch status in broadcast_logs.
     """
     logger.info(f"Starting broadcast task for slot_id={slot_id}")
-    provider = get_message_provider()
+    provider = get_configured_message_provider()
 
     async with AsyncSessionLocal() as session:
         # 1. Fetch slot with business and service details

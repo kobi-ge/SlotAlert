@@ -28,8 +28,8 @@ async def verify_whatsapp_signature(
 
     # Safe bypass for local development without credentials configured
     if not app_secret:
-        if settings.APP_ENV == "development":
-            logger.debug("WhatsApp signature verification skipped (no secret in development).")
+        if settings.APP_ENV in ("development", "test"):
+            logger.debug("WhatsApp signature verification skipped (no secret in development/test).")
             return body_bytes
         logger.error("WHATSAPP_APP_SECRET is not configured in non-development environment!")
         raise HTTPException(
