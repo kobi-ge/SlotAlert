@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from sqlalchemy import func, select
@@ -5,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.connection import get_redis_client
 from src.models.broadcast_log import BroadcastLog
+
+logger = logging.getLogger("slotalert.spam_guard")
 
 MAX_ALERTS_PER_24H = 2
 
@@ -17,6 +20,7 @@ async def can_send_notification(
     """
     Check if a notification can be sent to a customer under spam prevention rules:
     Maximum 2 notifications per customer per rolling 24-hour window.
+    Enforces PostgreSQL as the authoritative source of truth and keeps Redis in sync.
 
     :param db: Async database session
     :param customer_id: ID of the customer to check
@@ -25,19 +29,9 @@ async def can_send_notification(
     """
     current_time = now or datetime.now(timezone.utc)
     date_str = current_time.strftime("%Y-%m-%d")
+    redis_key = f"alerts:customer:{customer_id}:{date_str}"
 
-    # 1. Fast-Path: Check Redis counter (if available)
-    try:
-        redis = get_redis_client()
-        redis_key = f"alerts:customer:{customer_id}:{date_str}"
-        cached_count = await redis.get(redis_key)
-        if cached_count is not None and int(cached_count) >= MAX_ALERTS_PER_24H:
-            return False
-    except Exception:
-        # Fallback cleanly to database query
-        pass
-
-    # 2. Database Authority: Count broadcast_logs within rolling 24-hour window
+    # 1. Database Authority: Count actual SENT broadcast_logs within rolling 24-hour window
     cutoff = current_time - timedelta(hours=24)
     stmt = (
         select(func.count(BroadcastLog.id))
@@ -49,9 +43,24 @@ async def can_send_notification(
     )
 
     result = await db.execute(stmt)
-    count = result.scalar() or 0
+    db_count = result.scalar() or 0
 
-    return count < MAX_ALERTS_PER_24H
+    # 2. Resync Redis counter to reflect true database count
+    try:
+        redis = get_redis_client()
+        await redis.set(redis_key, db_count, ex=86400)
+    except Exception:
+        pass
+
+    # 3. Evaluate limit
+    if db_count >= MAX_ALERTS_PER_24H:
+        logger.warning(
+            f"🚫 [SpamGuard Blocked] Customer ID {customer_id} reached 24h limit: "
+            f"{db_count}/{MAX_ALERTS_PER_24H} alerts sent since {cutoff.strftime('%Y-%m-%d %H:%M:%S UTC')}."
+        )
+        return False
+
+    return True
 
 
 async def increment_customer_alert_count(customer_id: int, now: Optional[datetime] = None) -> None:

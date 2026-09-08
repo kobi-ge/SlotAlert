@@ -125,3 +125,154 @@ async def test_preview_candidates_all_boundaries(
         assert data["matched_count"] >= 0
         assert isinstance(data["time_slot_label"], str)
         assert expected_label_part in data["time_slot_label"], f"Expected '{expected_label_part}' in '{data['time_slot_label']}' for {time_str}"
+
+
+@pytest.mark.asyncio
+async def test_preview_and_quick_publish_candidate_parity(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    """
+    Verify 100% parity between /preview-candidates and /quick-publish:
+    Both must find the exact same number of matched and eligible candidates.
+    """
+    from src.core.security import create_business_access_token
+
+    uid = uuid.uuid4().hex[:6]
+    biz = Business(
+        name="קליניקת בדיקת התאמה מלאה",
+        phone_number=f"+97250{uid}72",
+        business_type="clinic",
+        slug=f"parity-test-{uid}",
+        is_active=True,
+    )
+    db_session.add(biz)
+    await db_session.flush()
+
+    svc = Service(
+        business_id=biz.id,
+        name="טיפול פנים",
+        duration_minutes=60,
+        price=Decimal("250.00"),
+    )
+    db_session.add(svc)
+    await db_session.flush()
+
+    # Add 1 matching customer for Monday morning
+    # 2026-09-07 is Monday (day_of_week = 1)
+    cust = Customer(
+        business_id=biz.id,
+        full_name="לקוח פריטי",
+        phone_number=f"+97250{uid}99",
+    )
+    db_session.add(cust)
+    await db_session.flush()
+
+    pref = CustomerPreference(
+        customer_id=cust.id,
+        day_of_week=1,  # Monday
+        time_slot="MORNING",
+        service_id=svc.id,
+    )
+    db_session.add(pref)
+    await db_session.commit()
+
+    start_time = "2026-09-07T09:00:00"
+
+    # 1. Preview candidates
+    prev_res = await client.post(
+        f"/api/v1/business/{biz.slug}/preview-candidates",
+        json={"service_id": svc.id, "start_time": start_time},
+    )
+    assert prev_res.status_code == 200
+    prev_data = prev_res.json()
+    assert prev_data["matched_count"] == 1
+    assert prev_data["eligible_count"] == 1
+    assert prev_data["skipped_spam_guard"] == 0
+
+    # 2. Quick publish
+    token = create_business_access_token(biz.id, biz.slug)
+    pub_res = await client.post(
+        f"/api/v1/business/{biz.slug}/quick-publish",
+        json={"service_id": svc.id, "start_time": start_time},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert pub_res.status_code == 201
+    pub_data = pub_res.json()
+    assert pub_data["total_matched"] == 1
+    assert pub_data["eligible_recipients"] == 1
+    assert pub_data["skipped_spam_guard"] == 0
+
+
+@pytest.mark.asyncio
+async def test_candidate_preview_resyncs_stale_redis_cache(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    """
+    Test scenario:
+    When Redis has a stale counter (e.g. 2 alerts) from past sends, but broadcast_logs
+    were deleted in PostgreSQL, SpamGuard and candidate preview must:
+    1. Query PostgreSQL as the ultimate authority.
+    2. Detect 0 sent logs in DB and resync Redis key.
+    3. Allow candidate through (eligible_count=1, skipped_spam_guard=0).
+    """
+    from src.database.connection import get_redis_client
+
+    uid = uuid.uuid4().hex[:6]
+    biz = Business(
+        name="קליניקת רדיס ריסינק",
+        phone_number=f"+97250{uid}73",
+        business_type="clinic",
+        slug=f"redis-resync-{uid}",
+        is_active=True,
+    )
+    db_session.add(biz)
+    await db_session.flush()
+
+    cust = Customer(
+        business_id=biz.id,
+        full_name="לקוח רדיס",
+        phone_number=f"+97250{uid}77",
+    )
+    db_session.add(cust)
+    await db_session.flush()
+
+    # 2026-09-08 is Tuesday (day_of_week = 2)
+    pref = CustomerPreference(
+        customer_id=cust.id,
+        day_of_week=2,
+        time_slot="MORNING",
+        service_id=None,
+    )
+    db_session.add(pref)
+    await db_session.commit()
+
+    # Seed Redis with stale counter = 2
+    redis = get_redis_client()
+    now_utc = datetime.now(timezone.utc)
+    date_str = now_utc.strftime("%Y-%m-%d")
+    redis_key = f"alerts:customer:{cust.id}:{date_str}"
+    await redis.set(redis_key, 2, ex=3600)
+
+    # Verify Redis is indeed 2 before preview
+    cached_val = await redis.get(redis_key)
+    assert cached_val == "2"
+
+    # Call preview-candidates
+    res = await client.post(
+        f"/api/v1/business/{biz.slug}/preview-candidates",
+        json={"start_time": "2026-09-08T10:00:00"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+
+    # PostgreSQL has 0 broadcast_logs, so customer is eligible!
+    assert data["matched_count"] == 1
+    assert data["eligible_count"] == 1
+    assert data["skipped_spam_guard"] == 0
+
+    # Verify Redis counter was resynced to 0
+    updated_val = await redis.get(redis_key)
+    assert updated_val == "0"
+

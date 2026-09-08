@@ -304,9 +304,12 @@
     let servicesList = [];
     let debounceTimer = null;
 
-    // Initialize date picker to today and time to next hour
+    // Initialize date picker to today (local time) and time to next hour
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
     document.getElementById('slotDate').value = todayStr;
     const hours = String(now.getHours() + 1).padStart(2, '0');
     document.getElementById('slotTime').value = `${hours}:00`;
@@ -565,7 +568,7 @@
 
       if (!dateVal || !timeVal) return;
 
-      const isoTime = new Date(`${dateVal}T${timeVal}:00`).toISOString();
+      const isoTime = `${dateVal}T${timeVal}:00`;
       const isCustom = svcVal === 'custom';
 
       try {
@@ -580,9 +583,15 @@
 
         if (res.ok) {
           const data = await res.json();
-          document.getElementById('previewText').innerHTML = `
-            נמצאו <span class="preview-highlight">${data.matched_count} ממתינים מתאימים</span> ליום ${data.day_name} (${data.time_slot_label})
-          `;
+          if (data.skipped_spam_guard > 0) {
+            document.getElementById('previewText').innerHTML = `
+              נמצאו <span class="preview-highlight">${data.eligible_count} ממתינים זמינים</span> לקבלת התראה (מתוך ${data.matched_count} מתאימים, ${data.skipped_spam_guard} במגבלת 2 התראות ביממה) ליום ${data.day_name} (${data.time_slot_label})
+            `;
+          } else {
+            document.getElementById('previewText').innerHTML = `
+              נמצאו <span class="preview-highlight">${data.matched_count} ממתינים מתאימים</span> ליום ${data.day_name} (${data.time_slot_label})
+            `;
+          }
         }
       } catch (e) {
         console.error('Preview error:', e);
@@ -783,7 +792,7 @@
         return;
       }
 
-      const isoTime = new Date(`${dateVal}T${timeVal}:00`).toISOString();
+      const isoTime = `${dateVal}T${timeVal}:00`;
 
       const btn = document.getElementById('submitPublishBtn');
       btn.disabled = true;
@@ -830,11 +839,20 @@
           });
 
           // 3. Display animated prominent Toast notification
-          const count = data.eligible_recipients ?? data.total_matched ?? 0;
-          showToast(
-            'התור הופץ בהצלחה! 🚀',
-            `נשלחה התראה ל-${count} ממתינים מתאימים בוואטסאפ.`
-          );
+          const eligible = data.eligible_recipients ?? 0;
+          const matched = data.total_matched ?? eligible;
+          if (eligible === 0 && matched > 0) {
+            showToast(
+              'התור פורסם בהצלחה! ℹ️',
+              `נמצאו ${matched} לקוחות מתאימים, אך כולם הגיעו למגבלת ההודעות (מקסימום 2 התראות ב-24 שעות). לא נשלחו הודעות ספאם.`,
+              'warning'
+            );
+          } else {
+            showToast(
+              'התור הופץ בהצלחה! 🚀',
+              `נשלחה התראה ל-${eligible} ממתינים מתאימים בוואטסאפ.`
+            );
+          }
 
           // 4. Background refresh of metrics
           loadDashboard();

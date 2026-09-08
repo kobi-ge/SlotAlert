@@ -33,6 +33,7 @@ async def filter_spam_candidates(
     """
     Evaluate waitlisted candidates against spam rate limiting (max 2 alerts / 24h).
     Returns tuple: (eligible_customer_ids, skipped_count).
+    Logs explicit reason for any candidate filtered out.
     """
     eligible_ids: List[int] = []
     skipped_count = 0
@@ -43,6 +44,10 @@ async def filter_spam_candidates(
             eligible_ids.append(customer.id)
         else:
             skipped_count += 1
+            logger.warning(
+                f"⚠️ [Candidate Filtered] Customer ID {customer.id} ({customer.full_name}, {customer.phone_number}) "
+                f"filtered out by SpamGuard: reached maximum 2 alerts in past 24 hours."
+            )
 
     return eligible_ids, skipped_count
 
@@ -79,12 +84,29 @@ async def prepare_and_queue_broadcast(
             status_code=400,
         )
 
-    # 2. Find matching customers
-    candidates = await find_matching_customers(db, slot_id)
+    # 2. Find matching customers (passing slot to prevent redundant query)
+    candidates = await find_matching_customers(db, slot_id=slot.id, slot=slot)
     total_matched = len(candidates)
 
     # 3. Filter candidates through SpamGuard
     eligible_ids, skipped_count = await filter_spam_candidates(db, candidates)
+
+    logger.info(
+        f"📊 [Broadcast Evaluation] slot_id={slot.id} | "
+        f"Matched by preferences: {total_matched} | "
+        f"Eligible to receive alert: {len(eligible_ids)} | "
+        f"Skipped by spam guard: {skipped_count}"
+    )
+
+    if total_matched > 0 and len(eligible_ids) == 0:
+        logger.warning(
+            f"⚠️ [Broadcast 0 Recipients] All {total_matched} matched customer(s) "
+            f"were skipped due to spam rate limiting (max 2 alerts / 24h)."
+        )
+    elif total_matched == 0:
+        logger.info(
+            f"ℹ️ [Broadcast 0 Matched] No waitlisted customers matched preferences for slot {slot.id}."
+        )
 
     # 4. Mark slot as SENDING to prevent duplicate triggers
     if eligible_ids:

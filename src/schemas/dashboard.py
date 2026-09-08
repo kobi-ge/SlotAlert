@@ -42,7 +42,9 @@ class SlotCandidatePreviewRequest(BaseModel):
 
 class SlotCandidatePreviewResponse(BaseModel):
     """Response containing real-time candidate count and human-friendly time labels."""
-    matched_count: int = Field(default=0, ge=0, description="Number of eligible candidates found")
+    matched_count: int = Field(default=0, ge=0, description="Total matching candidates based on availability preferences")
+    eligible_count: int = Field(default=0, ge=0, description="Candidates eligible to receive notification (not rate-limited)")
+    skipped_spam_guard: int = Field(default=0, ge=0, description="Candidates blocked by 24h spam prevention limits")
     day_name: str = Field(default="יום חול", description="Readable Hebrew day name")
     time_slot_label: str = Field(default="שעות כלליות", description="Readable Hebrew time window")
     time_slot: Optional[str] = Field(default=None, description="Internal time slot category name")

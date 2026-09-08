@@ -21,7 +21,11 @@ from src.schemas.dashboard import (
     WaitlistCustomerItem,
 )
 from src.schemas.slot import SlotCreateRequest
-from src.services.broadcast_service import prepare_and_queue_broadcast
+from src.services.broadcast_service import (
+    filter_spam_candidates,
+    prepare_and_queue_broadcast,
+)
+from src.services.matching_service import find_matching_customers_by_criteria
 from src.services.slot_service import create_slot
 from src.utils.time import (
     HEBREW_DAYS,
@@ -99,39 +103,30 @@ async def preview_candidates_for_slot(
     start_time: datetime,
 ) -> SlotCandidatePreviewResponse:
     """
-    Calculate matched candidates without creating a slot record.
+    Calculate matched and eligible candidates without creating a slot record.
     Provides live instant feedback for business owner in the quick-publish modal.
-    Guarantees non-None time_slot and defensive label mapping.
+    Uses unified matching criteria and evaluates SpamGuard eligibility.
     """
     day_of_week = calculate_day_of_week(start_time)
     time_slot = get_time_slot(start_time) or "MORNING"
 
-    # Query matching distinct customers - time_slot is guaranteed non-None
-    query = (
-        select(func.count(func.distinct(Customer.id)))
-        .join(CustomerPreference, CustomerPreference.customer_id == Customer.id)
-        .where(
-            Customer.business_id == business_id,
-            CustomerPreference.day_of_week == day_of_week,
-            CustomerPreference.time_slot == time_slot,
-        )
+    candidates = await find_matching_customers_by_criteria(
+        db=db,
+        business_id=business_id,
+        start_time=start_time,
+        service_id=service_id,
     )
+    matched_count = len(candidates)
 
-    if service_id is not None:
-        query = query.where(
-            (CustomerPreference.service_id.is_(None))
-            | (CustomerPreference.service_id == service_id)
-        )
-    else:
-        query = query.where(CustomerPreference.service_id.is_(None))
-
-    result = await db.execute(query)
-    matched_count = result.scalar() or 0
+    eligible_ids, skipped_count = await filter_spam_candidates(db, candidates)
+    eligible_count = len(eligible_ids)
 
     time_slot_label = TIME_SLOT_HEBREW_LABELS.get(time_slot, "שעות כלליות / גמיש")
 
     return SlotCandidatePreviewResponse(
         matched_count=matched_count,
+        eligible_count=eligible_count,
+        skipped_spam_guard=skipped_count,
         day_name=HEBREW_DAYS.get(day_of_week, f"יום {day_of_week}"),
         time_slot_label=time_slot_label,
         time_slot=time_slot,
