@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -123,11 +123,16 @@ async def claim_slot(
 )
 async def broadcast_slot(
     slot_id: int,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ) -> BroadcastResponse:
     """Trigger WhatsApp alert broadcast to eligible waitlist candidates."""
     try:
-        response = await prepare_and_queue_broadcast(db=db, slot_id=slot_id)
+        response = await prepare_and_queue_broadcast(
+            db=db,
+            slot_id=slot_id,
+            background_tasks=background_tasks,
+        )
         return response
     except BroadcastError as exc:
         raise HTTPException(

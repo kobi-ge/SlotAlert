@@ -41,7 +41,10 @@ class Settings(BaseSettings):
     WHATSAPP_MAX_RETRIES: int = 3
     WHATSAPP_RETRY_BACKOFF_FACTOR: float = 0.5
 
-    BASE_WEB_URL: str = "http://localhost:8000"
+    BASE_WEB_URL: str = Field(
+        default="http://localhost:8000",
+        validation_alias=AliasChoices("BASE_WEB_URL", "BASE_URL", "PUBLIC_URL", "APP_URL"),
+    )
 
     # Business Auth & Security
     JWT_SECRET: str = "slotalert-jwt-secret-key-change-in-production"

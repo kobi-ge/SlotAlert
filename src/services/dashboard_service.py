@@ -2,10 +2,12 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import logging
 from typing import List, Optional
+from fastapi import BackgroundTasks
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.config.settings import get_settings
 from src.models.business import Business
 from src.models.customer import Customer
 from src.models.preference import CustomerPreference
@@ -30,6 +32,7 @@ from src.utils.time import (
 )
 
 logger = logging.getLogger("slotalert.dashboard_service")
+settings = get_settings()
 
 
 
@@ -77,12 +80,15 @@ async def get_dashboard_summary(
             )
         )
 
+    public_optin_url = f"{settings.BASE_WEB_URL.rstrip('/')}/b/{business.slug}"
+
     return DashboardSummaryResponse(
         business_id=business.id,
         business_name=business.name,
         slug=business.slug,
         active_waitlist_count=active_count,
         recent_slots=recent_items,
+        public_optin_url=public_optin_url,
     )
 
 
@@ -140,6 +146,7 @@ async def quick_publish_and_broadcast_slot(
     duration_minutes: Optional[int] = None,
     custom_service_name: Optional[str] = None,
     custom_price: Optional[Decimal] = None,
+    background_tasks: Optional[BackgroundTasks] = None,
 ) -> QuickPublishSlotResponse:
     """
     Atomically creates slot and immediately enqueues the broadcast task.
@@ -175,8 +182,12 @@ async def quick_publish_and_broadcast_slot(
     )
     slot = await create_slot(db=db, slot_in=slot_in)
 
-    # 3. Immediately queue broadcast
-    broadcast_res = await prepare_and_queue_broadcast(db=db, slot_id=slot.id)
+    # 3. Immediately queue broadcast with ASGI background tasks support
+    broadcast_res = await prepare_and_queue_broadcast(
+        db=db,
+        slot_id=slot.id,
+        background_tasks=background_tasks,
+    )
 
     return QuickPublishSlotResponse(
         slot_id=slot.id,

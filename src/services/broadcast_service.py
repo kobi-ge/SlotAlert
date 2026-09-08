@@ -1,13 +1,21 @@
-from typing import List, Tuple
+import asyncio
+import logging
+from typing import List, Optional, Tuple
+from fastapi import BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config.settings import get_settings
 from src.models.customer import Customer
 from src.models.slot import Slot, SlotStatus
 from src.schemas.broadcast import BroadcastResponse
 from src.services.matching_service import find_matching_customers
 from src.services.messaging.spam_guard import can_send_notification
+from src.tasks.broadcast_tasks import execute_slot_broadcast
 from src.tasks.queue import task_queue
+
+logger = logging.getLogger("slotalert.broadcast")
+settings = get_settings()
 
 
 class BroadcastError(Exception):
@@ -42,6 +50,8 @@ async def filter_spam_candidates(
 async def prepare_and_queue_broadcast(
     db: AsyncSession,
     slot_id: int,
+    background_tasks: Optional[BackgroundTasks] = None,
+    base_url: Optional[str] = None,
 ) -> BroadcastResponse:
     """
     Orchestrates the slot broadcast workflow:
@@ -49,7 +59,8 @@ async def prepare_and_queue_broadcast(
     2. Identifies matching waitlist customers based on preference rules.
     3. Filters out customers who have hit the spam threshold.
     4. Transitions slot to SENDING to guarantee idempotency.
-    5. Enqueues background dispatch job in Redis task queue.
+    5. Dispatches execution immediately via FastAPI BackgroundTasks (or event loop task fallback)
+       AND registers job with Redis task queue for auditability.
     """
     # 1. Validate slot
     stmt = select(Slot).where(Slot.id == slot_id)
@@ -80,12 +91,42 @@ async def prepare_and_queue_broadcast(
         slot.status = SlotStatus.SENDING
         await db.commit()
 
-        # 5. Enqueue background broadcast task
-        await task_queue.enqueue(
-            "send_slot_broadcast_task",
-            slot_id=slot.id,
-            recipient_customer_ids=eligible_ids,
-        )
+        effective_base_url = (base_url or settings.BASE_WEB_URL).rstrip("/")
+
+        # 5. Immediate In-Process ASGI Dispatch (FastAPI BackgroundTasks or Event Loop)
+        if background_tasks is not None:
+            logger.info(f"⚡ [Dispatch] Enqueueing broadcast for slot {slot.id} to FastAPI native BackgroundTasks")
+            background_tasks.add_task(
+                execute_slot_broadcast,
+                slot_id=slot.id,
+                recipient_customer_ids=eligible_ids,
+                base_url=effective_base_url,
+            )
+        else:
+            logger.info(f"⚡ [Dispatch] Enqueueing broadcast for slot {slot.id} to active asyncio event loop task")
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(
+                    execute_slot_broadcast(
+                        slot_id=slot.id,
+                        recipient_customer_ids=eligible_ids,
+                        base_url=effective_base_url,
+                    )
+                )
+            except RuntimeError:
+                # No running loop, will rely on queue
+                pass
+
+        # 6. Also register in Redis task queue for auditability and external workers if present
+        try:
+            await task_queue.enqueue(
+                "send_slot_broadcast_task",
+                slot_id=slot.id,
+                recipient_customer_ids=eligible_ids,
+                base_url=effective_base_url,
+            )
+        except Exception as q_err:
+            logger.warning(f"Could not enqueue task to Redis (non-fatal): {q_err}")
 
     return BroadcastResponse(
         status="queued",

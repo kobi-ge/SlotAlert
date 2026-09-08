@@ -1,6 +1,6 @@
 import os
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -93,6 +93,7 @@ async def preview_candidates(
 async def quick_publish_slot(
     slug: str,
     publish_req: QuickPublishSlotRequest,
+    background_tasks: BackgroundTasks,
     business: Business = Depends(get_current_business),
     db: AsyncSession = Depends(get_db),
 ) -> QuickPublishSlotResponse:
@@ -106,6 +107,7 @@ async def quick_publish_slot(
             duration_minutes=publish_req.duration_minutes,
             custom_service_name=publish_req.custom_service_name,
             custom_price=publish_req.custom_price,
+            background_tasks=background_tasks,
         )
         return response
     except ValueError as exc:

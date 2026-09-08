@@ -28,6 +28,10 @@ class DashboardSummaryResponse(BaseModel):
     slug: str
     active_waitlist_count: int
     recent_slots: List[RecentSlotItem] = Field(default_factory=list)
+    public_optin_url: Optional[str] = Field(
+        default=None,
+        description="Authoritative public HTTPS customer waitlist opt-in URL",
+    )
 
 
 class SlotCandidatePreviewRequest(BaseModel):

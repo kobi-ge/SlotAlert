@@ -122,6 +122,12 @@ async def register_business_endpoint(
     description="Renders the mobile-first Hebrew PWA registration page for a business.",
     response_class=FileResponse,
 )
+@router.get(
+    "/join/{slug}",
+    summary="Serve Customer Opt-in Registration Page (Join Alias)",
+    description="Alias to /b/{slug} for easy customer waitlist onboarding.",
+    response_class=FileResponse,
+)
 async def serve_optin_page(slug: str):
     """Serve the opt-in HTML landing page."""
     if not os.path.exists(OPTIN_HTML_PATH):

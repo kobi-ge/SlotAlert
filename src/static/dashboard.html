@@ -228,7 +228,11 @@
         <button class="btn-close" id="closeQrPrintModal">✕</button>
       </div>
 
-      <div class="print-actions" style="margin-bottom: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+      <div class="print-actions" style="margin-bottom: 20px; display: flex; gap: 10px; justify-content: flex-end; align-items: center;">
+        <button type="button" id="copyPosterLinkBtn" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; height: 44px; padding: 0 16px; font-size: 0.9rem; font-weight: 600; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <span id="copyPosterLinkText">העתק קישור</span>
+          <span>📋</span>
+        </button>
         <button class="btn-hero" id="printNowBtn" style="height: 44px; width: auto; padding: 0 20px; font-size: 0.95rem;">
           <span>הדפס עכשיו</span>
           <span>🖨️</span>
@@ -245,6 +249,7 @@
           <div class="poster-qr-frame">
             <div id="posterQrContainer" class="poster-qr-svg"></div>
             <div class="poster-qr-caption">סרקו בנייד לפתיחת טופס ההרשמה המהיר</div>
+            <div class="poster-qr-url" id="posterQrUrlDisplay" style="margin-top: 8px; font-size: 0.8rem; color: #64748b; direction: ltr; font-family: monospace; word-break: break-all;"></div>
           </div>
 
           <div class="poster-cta-box">
@@ -318,6 +323,9 @@
 
         document.getElementById('bizTitle').innerText = data.business_name;
         document.getElementById('waitlistCount').innerText = data.active_waitlist_count;
+        if (data.public_optin_url) {
+          window.currentPublicOptinUrl = data.public_optin_url;
+        }
         renderRecentSlots(data.recent_slots);
       } catch (e) {
         console.error('Failed to load dashboard:', e);
@@ -970,17 +978,45 @@
     };
 
     // QR Code Print Modal handlers
+    function getResolvedOptinUrl() {
+      let optinUrl = window.currentPublicOptinUrl;
+      const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // If no public URL is configured or if we are browsing from a public domain while optinUrl points to internal/local
+      if (!optinUrl || (!isLocalHost && (optinUrl.includes('localhost') || optinUrl.includes('0.0.0.0')))) {
+        optinUrl = `${window.location.origin}/b/${slug}`;
+      }
+      return optinUrl;
+    }
+
     document.getElementById('openQrKitBtn').onclick = () => {
       const bizTitle = document.getElementById('bizTitle').innerText || 'הקליניקה';
       document.getElementById('posterBizName').innerText = bizTitle;
-      const optinUrl = `${window.location.origin}/b/${slug}`;
+
+      const optinUrl = getResolvedOptinUrl();
       const qrContainer = document.getElementById('posterQrContainer');
+      const urlDisplay = document.getElementById('posterQrUrlDisplay');
+      if (urlDisplay) {
+        urlDisplay.innerText = optinUrl;
+      }
+
       if (window.generateQrSvg) {
-        window.generateQrSvg(optinUrl, qrContainer, 200);
+        window.generateQrSvg(optinUrl, qrContainer, 210);
       } else {
-        qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(optinUrl)}" alt="QR Code" width="200" height="200" />`;
+        qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=210x210&data=${encodeURIComponent(optinUrl)}&margin=10" alt="QR Code" width="210" height="210" style="display:block;margin:0 auto;" />`;
       }
       document.getElementById('qrPrintModal').classList.add('active');
+    };
+
+    document.getElementById('copyPosterLinkBtn').onclick = async () => {
+      const optinUrl = getResolvedOptinUrl();
+      try {
+        await navigator.clipboard.writeText(optinUrl);
+        const txt = document.getElementById('copyPosterLinkText');
+        txt.innerText = 'הקישור הועתק! ✔️';
+        setTimeout(() => { txt.innerText = 'העתק קישור'; }, 2500);
+      } catch (err) {
+        prompt('העתק את הקישור להרשמה:', optinUrl);
+      }
     };
 
     document.getElementById('closeQrPrintModal').onclick = () => {

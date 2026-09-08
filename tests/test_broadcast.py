@@ -181,3 +181,194 @@ async def test_broadcast_slot_orchestration_and_spam_skipping(
     await db_session.refresh(slot)
     assert slot.status == SlotStatus.OPEN
     print("Broadcast and spam-skipping verification succeeded!")
+
+
+@pytest.mark.asyncio
+async def test_quick_publish_background_task_in_process_execution(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    """
+    Verify that quick-publish executes broadcast immediately in-process
+    via FastAPI BackgroundTasks without needing an external Celery worker.
+    """
+    from src.core.security import create_business_access_token
+    from src.tasks.broadcast_tasks import execute_slot_broadcast
+
+    provider = get_message_provider()
+    provider.clear()
+
+    uid = uuid.uuid4().hex[:6]
+    biz = Business(
+        name="קליניקת בדיקת משימות רקע",
+        phone_number=f"+97252{uid}88",
+        business_type="clinic",
+        slug=f"bg-test-{uid}",
+        is_active=True,
+    )
+    db_session.add(biz)
+    await db_session.flush()
+
+    svc = Service(
+        business_id=biz.id,
+        name="טיפול לייזר",
+        duration_minutes=45,
+        price=Decimal("350.00"),
+    )
+    db_session.add(svc)
+    await db_session.flush()
+
+    cust = Customer(
+        business_id=biz.id,
+        full_name="לקוח רקע מיידי",
+        phone_number=f"+97252{uid}99",
+    )
+    db_session.add(cust)
+    await db_session.flush()
+
+    pref = CustomerPreference(
+        customer_id=cust.id,
+        day_of_week=1,  # Monday
+        time_slot="MORNING",
+        service_id=svc.id,
+    )
+    db_session.add(pref)
+    await db_session.commit()
+
+    token = create_business_access_token(biz.id, biz.slug)
+
+    # Call quick-publish via HTTP client (ASGI Transport automatically executes BackgroundTasks)
+    res = await client.post(
+        f"/api/v1/business/{biz.slug}/quick-publish",
+        json={
+            "service_id": svc.id,
+            "start_time": "2026-09-28T09:00:00Z",  # Monday morning
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 201
+    data = res.json()
+    assert data["broadcast_status"] == "queued"
+    assert data["eligible_recipients"] == 1
+
+    # Verify messages were sent immediately by BackgroundTasks (0 external worker consumption required!)
+    assert len(provider.sent_messages) == 1
+    assert provider.sent_messages[0].phone_number == cust.phone_number
+
+    # Verify BroadcastLog was persisted
+    log_stmt = select(BroadcastLog).where(
+        BroadcastLog.slot_id == data["slot_id"],
+        BroadcastLog.customer_id == cust.id,
+    )
+    log_res = await db_session.execute(log_stmt)
+    log = log_res.scalar_one_or_none()
+    assert log is not None
+    assert log.delivery_status == "SENT"
+
+
+@pytest.mark.asyncio
+async def test_broadcast_idempotency_skip(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    """
+    Verify that calling execute_slot_broadcast twice skips customers who
+    already received an alert, preventing duplicate WhatsApp messages.
+    """
+    from src.tasks.broadcast_tasks import execute_slot_broadcast
+
+    provider = get_message_provider()
+    provider.clear()
+
+    uid = uuid.uuid4().hex[:6]
+    biz = Business(
+        name="קליניקת בדיקת מניעת כפילות",
+        phone_number=f"+97253{uid}11",
+        business_type="clinic",
+        slug=f"idempotency-{uid}",
+        is_active=True,
+    )
+    db_session.add(biz)
+    await db_session.flush()
+
+    svc = Service(
+        business_id=biz.id,
+        name="עיצוב גבות",
+        duration_minutes=30,
+        price=Decimal("120.00"),
+    )
+    db_session.add(svc)
+    await db_session.flush()
+
+    cust = Customer(
+        business_id=biz.id,
+        full_name="לקוח בדיקת כפילות",
+        phone_number=f"+97253{uid}22",
+    )
+    db_session.add(cust)
+    await db_session.flush()
+
+    slot = Slot(
+        business_id=biz.id,
+        service_id=svc.id,
+        start_time=datetime(2026, 9, 29, 14, 0, tzinfo=timezone.utc),
+        end_time=datetime(2026, 9, 29, 14, 30, tzinfo=timezone.utc),
+        status=SlotStatus.SENDING,
+        version=1,
+    )
+    db_session.add(slot)
+    await db_session.commit()
+
+    # First dispatch
+    await execute_slot_broadcast(slot_id=slot.id, recipient_customer_ids=[cust.id])
+    assert len(provider.sent_messages) == 1
+
+    # Second dispatch (e.g. from queue worker or delayed retry)
+    await execute_slot_broadcast(slot_id=slot.id, recipient_customer_ids=[cust.id])
+    # Must still be exactly 1, no duplicate sent!
+    assert len(provider.sent_messages) == 1
+
+
+@pytest.mark.asyncio
+async def test_qr_routing_and_public_optin_url(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    """
+    Verify /b/{slug} and /join/{slug} both serve the customer opt-in page,
+    and /api/v1/business/{slug}/dashboard returns authoritative public_optin_url.
+    """
+    from src.core.security import create_business_access_token
+
+    uid = uuid.uuid4().hex[:6]
+    slug = f"qr-test-{uid}"
+    biz = Business(
+        name="קליניקת QR",
+        phone_number=f"+97254{uid}55",
+        business_type="clinic",
+        slug=slug,
+        is_active=True,
+    )
+    db_session.add(biz)
+    await db_session.commit()
+
+    # Test /b/{slug}
+    res_b = await client.get(f"/b/{slug}")
+    assert res_b.status_code == 200
+    assert "text/html" in res_b.headers["content-type"]
+
+    # Test /join/{slug} alias
+    res_join = await client.get(f"/join/{slug}")
+    assert res_join.status_code == 200
+    assert "text/html" in res_join.headers["content-type"]
+
+    # Test dashboard summary returns public_optin_url
+    token = create_business_access_token(biz.id, biz.slug)
+    res_dash = await client.get(
+        f"/api/v1/business/{slug}/dashboard",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res_dash.status_code == 200
+    data = res_dash.json()
+    assert "public_optin_url" in data
+    assert data["public_optin_url"].endswith(f"/b/{slug}")
