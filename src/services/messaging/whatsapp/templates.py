@@ -1,6 +1,69 @@
 from typing import Any, Dict
 
 
+def build_slot_alert_template_payload(
+    to_phone: str,
+    customer_id: int,
+    customer_name: str,
+    business_name: str,
+    service_name: str,
+    start_time_formatted: str,
+    slot_id: int,
+    template_name: str = "slot_cancellation_alert_v1",
+    language_code: str = "he",
+) -> Dict[str, Any]:
+    """
+    Build official Meta WhatsApp Cloud API pre-approved Template payload.
+    Strictly uses pure QUICK_REPLY buttons (no URL buttons mixed) for 24h compliance.
+    - Body variables:
+      {{1}}: Customer full name
+      {{2}}: Business name
+      {{3}}: Service name
+      {{4}}: Formatted appointment time
+    - Button 0: Quick Reply (claim:{slot_id}:{customer_id})
+    - Button 1: Quick Reply (optout:{customer_id})
+    """
+    return {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": to_phone,
+        "type": "template",
+        "template": {
+            "name": template_name,
+            "language": {
+                "code": language_code,
+            },
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {"type": "text", "text": customer_name},
+                        {"type": "text", "text": business_name},
+                        {"type": "text", "text": service_name},
+                        {"type": "text", "text": start_time_formatted},
+                    ],
+                },
+                {
+                    "type": "button",
+                    "sub_type": "quick_reply",
+                    "index": 0,
+                    "parameters": [
+                        {"type": "payload", "payload": f"claim:{slot_id}:{customer_id}"}
+                    ],
+                },
+                {
+                    "type": "button",
+                    "sub_type": "quick_reply",
+                    "index": 1,
+                    "parameters": [
+                        {"type": "payload", "payload": f"optout:{customer_id}"}
+                    ],
+                },
+            ],
+        },
+    }
+
+
 def build_slot_offer_interactive_payload(
     to_phone: str,
     customer_id: int,

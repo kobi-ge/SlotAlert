@@ -100,30 +100,41 @@ def parse_webhook_events(payload: Dict[str, Any]) -> tuple[List[DeliveryStatusUp
 
                 # Process button payload if present
                 if button_payload:
-                    # e.g., "claim:slot:11:cust:1"
-                    if button_payload.startswith("claim:slot:"):
+                    if button_payload.startswith("claim:"):
                         try:
-                            # Parse "claim:slot:{slot_id}:cust:{customer_id}"
                             parts = button_payload.split(":")
-                            slot_id = int(parts[2])
-                            customer_id = int(parts[4])
-                            user_actions.append(
-                                IncomingUserAction(
-                                    action_type="claim",
-                                    from_phone=from_phone,
-                                    slot_id=slot_id,
-                                    customer_id=customer_id,
-                                    raw_payload=button_payload,
+                            if len(parts) == 3:  # claim:{slot_id}:{customer_id}
+                                slot_id = int(parts[1])
+                                customer_id = int(parts[2])
+                            elif len(parts) >= 5 and parts[1] == "slot":  # claim:slot:{slot_id}:cust:{customer_id}
+                                slot_id = int(parts[2])
+                                customer_id = int(parts[4])
+                            else:
+                                slot_id = None
+                                customer_id = None
+
+                            if slot_id and customer_id:
+                                user_actions.append(
+                                    IncomingUserAction(
+                                        action_type="claim",
+                                        from_phone=from_phone,
+                                        slot_id=slot_id,
+                                        customer_id=customer_id,
+                                        raw_payload=button_payload,
+                                    )
                                 )
-                            )
                         except Exception as exc:
                             logger.error(f"Failed to parse claim payload '{button_payload}': {exc}")
 
-                    # e.g., "optout:cust:1"
-                    elif button_payload.startswith("optout:cust:"):
+                    elif button_payload.startswith("optout:"):
                         try:
                             parts = button_payload.split(":")
-                            customer_id = int(parts[2])
+                            customer_id = None
+                            if len(parts) == 2 and parts[1].isdigit():  # optout:{customer_id}
+                                customer_id = int(parts[1])
+                            elif len(parts) == 3 and parts[1] == "cust":  # optout:cust:{customer_id}
+                                customer_id = int(parts[2])
+
                             user_actions.append(
                                 IncomingUserAction(
                                     action_type="optout",

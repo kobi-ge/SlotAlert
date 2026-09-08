@@ -53,6 +53,24 @@ def override_db_dependency():
     app.dependency_overrides.pop(get_db, None)
 
 
+@pytest_asyncio.fixture(autouse=True)
+async def cleanup_redis_queue():
+    """Ensure Redis task queue is clean before and after each test."""
+    from src.database.connection import get_redis_client
+    from src.tasks.queue import task_queue
+    try:
+        redis = get_redis_client()
+        await redis.delete(task_queue.queue_key)
+    except Exception:
+        pass
+    yield
+    try:
+        redis = get_redis_client()
+        await redis.delete(task_queue.queue_key)
+    except Exception:
+        pass
+
+
 @pytest_asyncio.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """Provide an isolated test database session with NullPool."""

@@ -75,6 +75,7 @@ async def send_slot_broadcast_task(
                         slot_id=slot.id,
                         customer_id=customer.id,
                         message_sid=sid,
+                        wamid=sid,
                         delivery_status="SENT",
                         sent_at=datetime.now(timezone.utc),
                     )
@@ -86,7 +87,9 @@ async def send_slot_broadcast_task(
                         slot_id=slot.id,
                         customer_id=customer.id,
                         message_sid=None,
+                        wamid=None,
                         delivery_status="FAILED",
+                        failure_reason=str(exc)[:255],
                         sent_at=datetime.now(timezone.utc),
                     )
                     session.add(log_entry)

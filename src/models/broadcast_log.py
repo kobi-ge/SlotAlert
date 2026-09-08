@@ -29,12 +29,17 @@ class BroadcastLog(Base):
         index=True,
     )
     message_sid: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    wamid: Mapped[str | None] = mapped_column(String(128), index=True, nullable=True)
     delivery_status: Mapped[str] = mapped_column(String(50), default="SENT", nullable=False)
+    meta_error_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    failure_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     sent_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     slot: Mapped["Slot"] = relationship("Slot", back_populates="broadcast_logs")

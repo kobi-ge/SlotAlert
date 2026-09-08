@@ -33,6 +33,20 @@ from src.schemas.slot import (
     SlotCreateRequest,
     SlotResponse,
 )
+from src.schemas.whatsapp import (
+    MetaButtonReply,
+    MetaInteractive,
+    MetaInteractiveButtonReply,
+    MetaMessageItem,
+    MetaStatusItem,
+    MetaTextMessage,
+    WhatsAppMarkReadPayload,
+    WhatsAppTemplateComponent,
+    WhatsAppTemplateMessagePayload,
+    WhatsAppTemplateParameter,
+    WhatsAppTextMessagePayload,
+    WhatsAppWebhookPayload,
+)
 
 __all__ = [
     "HealthResponse",
@@ -60,4 +74,14 @@ __all__ = [
     "PinRequestResponse",
     "PinVerifyRequest",
     "TokenResponse",
+    "WhatsAppTemplateMessagePayload",
+    "WhatsAppTextMessagePayload",
+    "WhatsAppMarkReadPayload",
+    "WhatsAppWebhookPayload",
+    "MetaMessageItem",
+    "MetaStatusItem",
+    "MetaButtonReply",
+    "MetaInteractiveButtonReply",
+    "MetaInteractive",
+    "MetaTextMessage",
 ]

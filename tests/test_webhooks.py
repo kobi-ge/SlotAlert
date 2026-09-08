@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 import uuid
 from datetime import datetime, timezone
@@ -476,3 +477,381 @@ async def test_webhook_optout_button_and_keyword(
     assert len(list(prefs_res2.scalars().all())) == 0
     assert len(provider.sent_messages) == 2
     assert "הוסרת בהצלחה" in provider.sent_messages[1].body
+
+
+@pytest.mark.asyncio
+async def test_webhook_hmac_signature_verification(
+    client: httpx.AsyncClient,
+    monkeypatch,
+):
+    """Test HMAC-SHA256 signature verification middleware and dependency."""
+    import hashlib
+    import hmac
+    from pydantic import SecretStr
+
+    test_secret = "test_meta_webhook_secret_key_123"
+    monkeypatch.setattr(settings, "WHATSAPP_APP_SECRET", SecretStr(test_secret))
+
+    payload_dict = {
+        "object": "whatsapp_business_account",
+        "entry": [
+            {
+                "id": "12345",
+                "changes": [
+                    {
+                        "field": "messages",
+                        "value": {
+                            "messaging_product": "whatsapp",
+                            "metadata": {"display_phone_number": "123", "phone_number_id": "456"},
+                            "messages": [],
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+    raw_body = json.dumps(payload_dict).encode("utf-8")
+
+    # 1. Missing signature header -> 403 Forbidden
+    res_missing = await client.post(
+        "/api/v1/webhooks/whatsapp",
+        content=raw_body,
+        headers={"Content-Type": "application/json"},
+    )
+    assert res_missing.status_code == 403
+
+    # 2. Invalid signature header -> 403 Forbidden
+    res_bad = await client.post(
+        "/api/v1/webhooks/whatsapp",
+        content=raw_body,
+        headers={
+            "Content-Type": "application/json",
+            "X-Hub-Signature-256": "sha256=invalid_hash_signature",
+        },
+    )
+    assert res_bad.status_code == 403
+
+    # 3. Valid signature -> 200 OK
+    valid_sig = hmac.new(test_secret.encode("utf-8"), msg=raw_body, digestmod=hashlib.sha256).hexdigest()
+    res_valid = await client.post(
+        "/api/v1/webhooks/whatsapp",
+        content=raw_body,
+        headers={
+            "Content-Type": "application/json",
+            "X-Hub-Signature-256": f"sha256={valid_sig}",
+        },
+    )
+    assert res_valid.status_code == 200
+    assert res_valid.json() == {"status": "ok"}
+
+
+@pytest.mark.asyncio
+async def test_webhook_template_quick_reply_claim(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    """Test Template Quick-Reply button reply (format 'claim:{slot_id}:{customer_id}')."""
+    provider = get_message_provider()
+    provider.clear()
+
+    uid = uuid.uuid4().hex[:6]
+    biz = Business(
+        name="קליניקת תבנית",
+        phone_number=f"+97258{uid}77",
+        business_type="clinic",
+        slug=f"template-test-{uid}",
+        is_active=True,
+    )
+    db_session.add(biz)
+    await db_session.flush()
+
+    svc = Service(
+        business_id=biz.id,
+        name="טיפול לייזר",
+        duration_minutes=45,
+        price=Decimal("250.00"),
+    )
+    db_session.add(svc)
+    await db_session.flush()
+
+    cust = Customer(
+        business_id=biz.id,
+        full_name="דני תבנית",
+        phone_number=f"+97250{uid}77",
+    )
+    db_session.add(cust)
+    await db_session.flush()
+
+    slot = Slot(
+        business_id=biz.id,
+        service_id=svc.id,
+        start_time=datetime(2026, 10, 8, 9, 0, tzinfo=timezone.utc),
+        end_time=datetime(2026, 10, 8, 10, 0, tzinfo=timezone.utc),
+        status=SlotStatus.OPEN,
+        version=1,
+    )
+    db_session.add(slot)
+    await db_session.commit()
+
+    # Meta Quick-Reply template response payload: msg.type == 'button' with msg.button.payload
+    template_btn_payload = {
+        "object": "whatsapp_business_account",
+        "entry": [
+            {
+                "id": "waba_1",
+                "changes": [
+                    {
+                        "field": "messages",
+                        "value": {
+                            "messaging_product": "whatsapp",
+                            "metadata": {"display_phone_number": "123", "phone_number_id": "456"},
+                            "messages": [
+                                {
+                                    "id": f"wamid.btn_{uid}",
+                                    "from": cust.phone_number.replace("+", ""),
+                                    "timestamp": "1725351000",
+                                    "type": "button",
+                                    "button": {
+                                        "payload": f"claim:{slot.id}:{cust.id}",
+                                        "text": "אני רוצה את התור! 🎉",
+                                    },
+                                }
+                            ],
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+    res = await client.post("/api/v1/webhooks/whatsapp", json=template_btn_payload)
+    assert res.status_code == 200
+
+    # Verify atomic claim
+    await db_session.refresh(slot)
+    assert slot.status == SlotStatus.CLAIMED
+    assert slot.claimed_by_customer_id == cust.id
+
+
+@pytest.mark.asyncio
+async def test_webhook_redis_idempotency_guard(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    """Test that duplicate webhook messages with the same wamid are processed only once."""
+    provider = get_message_provider()
+    provider.clear()
+
+    uid = uuid.uuid4().hex[:6]
+    biz = Business(
+        name="קליניקת שכפול",
+        phone_number=f"+97258{uid}88",
+        business_type="clinic",
+        slug=f"dedup-test-{uid}",
+        is_active=True,
+    )
+    db_session.add(biz)
+    await db_session.flush()
+
+    cust = Customer(
+        business_id=biz.id,
+        full_name="דנה שכפול",
+        phone_number=f"+97250{uid}88",
+    )
+    db_session.add(cust)
+    await db_session.flush()
+
+    pref = CustomerPreference(
+        customer_id=cust.id,
+        day_of_week=3,
+        time_slot="MORNING",
+    )
+    db_session.add(pref)
+    await db_session.commit()
+
+    fixed_wamid = f"wamid.duplicate_test_{uid}"
+    duplicate_payload = {
+        "entry": [
+            {
+                "changes": [
+                    {
+                        "value": {
+                            "messages": [
+                                {
+                                    "id": fixed_wamid,
+                                    "from": cust.phone_number,
+                                    "type": "text",
+                                    "text": {"body": "הסר"},
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
+    # First dispatch -> successfully processed
+    res1 = await client.post("/api/v1/webhooks/whatsapp", json=duplicate_payload)
+    assert res1.status_code == 200
+    assert len(provider.sent_messages) == 1
+
+    # Second dispatch with identical wamid -> discarded by Redis idempotency guard
+    res2 = await client.post("/api/v1/webhooks/whatsapp", json=duplicate_payload)
+    assert res2.status_code == 200
+    assert len(provider.sent_messages) == 1  # Should NOT send a second opt-out confirmation!
+
+
+@pytest.mark.asyncio
+async def test_webhook_delivery_status_failure_telemetry(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    """Test that failed delivery status updates record meta_error_code and failure_reason in DB."""
+    uid = uuid.uuid4().hex[:6]
+    test_wamid = f"wamid_failed_{uid}"
+
+    biz = Business(
+        name="קליניקת כשלון",
+        phone_number=f"+97258{uid}99",
+        business_type="clinic",
+        slug=f"fail-test-{uid}",
+        is_active=True,
+    )
+    db_session.add(biz)
+    await db_session.flush()
+
+    svc = Service(
+        business_id=biz.id,
+        name="טיפול",
+        duration_minutes=30,
+        price=Decimal("100.00"),
+    )
+    db_session.add(svc)
+    await db_session.flush()
+
+    cust = Customer(
+        business_id=biz.id,
+        full_name="לקוח כשלון",
+        phone_number=f"+97250{uid}99",
+    )
+    db_session.add(cust)
+    await db_session.flush()
+
+    slot = Slot(
+        business_id=biz.id,
+        service_id=svc.id,
+        start_time=datetime(2026, 10, 10, 10, 0, tzinfo=timezone.utc),
+        end_time=datetime(2026, 10, 10, 10, 30, tzinfo=timezone.utc),
+        status=SlotStatus.OPEN,
+        version=1,
+    )
+    db_session.add(slot)
+    await db_session.flush()
+
+    log = BroadcastLog(
+        slot_id=slot.id,
+        customer_id=cust.id,
+        message_sid=test_wamid,
+        wamid=test_wamid,
+        delivery_status="SENT",
+        sent_at=datetime.now(timezone.utc),
+    )
+    db_session.add(log)
+    await db_session.commit()
+
+    failed_payload = {
+        "entry": [
+            {
+                "changes": [
+                    {
+                        "value": {
+                            "statuses": [
+                                {
+                                    "id": test_wamid,
+                                    "status": "failed",
+                                    "recipient_id": cust.phone_number,
+                                    "timestamp": "1725352000",
+                                    "errors": [
+                                        {
+                                            "code": 131026,
+                                            "title": "Message Undeliverable",
+                                            "message": "The message was not delivered to this WhatsApp number.",
+                                        }
+                                    ],
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
+    res = await client.post("/api/v1/webhooks/whatsapp", json=failed_payload)
+    assert res.status_code == 200
+
+    await db_session.refresh(log)
+    assert log.delivery_status == "FAILED"
+    assert log.meta_error_code == 131026
+    assert "The message was not delivered" in log.failure_reason
+
+
+@pytest.mark.asyncio
+async def test_webhook_queue_decoupling_and_fast_ack(
+    client: httpx.AsyncClient,
+):
+    """
+    Verify webhook responds with 200 OK immediately and enqueues to Redis
+    without performing inline synchronous processing when running decoupled.
+    """
+    import time
+    from src.tasks.queue import task_queue
+    from src.database.connection import get_redis_client
+
+    redis = get_redis_client()
+    await redis.delete(task_queue.queue_key)
+
+    payload = {
+        "object": "whatsapp_business_account",
+        "entry": [
+            {
+                "id": "12345",
+                "changes": [
+                    {
+                        "field": "messages",
+                        "value": {
+                            "messaging_product": "whatsapp",
+                            "metadata": {"display_phone_number": "123", "phone_number_id": "456"},
+                            "messages": [{"id": "wamid.fast_ack_test", "from": "972501234567", "type": "text", "text": {"body": "hello"}}],
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+    # Pass X-Test-Async: 1 to skip immediate inline test runner pop
+    t0 = time.perf_counter()
+    res = await client.post(
+        "/api/v1/webhooks/whatsapp",
+        json=payload,
+        headers={"X-Test-Async": "1"},
+    )
+    elapsed_ms = (time.perf_counter() - t0) * 1000
+
+    assert res.status_code == 200
+    assert res.json() == {"status": "ok"}
+    # Verify sub-100ms response time
+    assert elapsed_ms < 100, f"Webhook took {elapsed_ms:.1f}ms, expected <100ms"
+
+    # Verify task was placed into Redis
+    q_len = await redis.llen(task_queue.queue_key)
+    assert q_len == 1
+
+    # Now manually process the job and assert success
+    processed = await task_queue.process_one_job(timeout=1.0)
+    assert processed is True
+    assert await redis.llen(task_queue.queue_key) == 0
+
+

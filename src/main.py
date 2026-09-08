@@ -21,6 +21,7 @@ from src.schemas.health import HealthResponse
 from src.tasks.queue import task_queue
 # Ensure tasks are registered
 import src.tasks.broadcast_tasks  # noqa: F401
+import src.tasks.webhook_tasks  # noqa: F401
 
 settings = get_settings()
 logger = logging.getLogger("uvicorn.error")
