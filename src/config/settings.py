@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     WHATSAPP_API_VERSION: str = "v20.0"
 
     # Template Defaults & Network Resilience
-    WHATSAPP_SLOT_TEMPLATE_NAME: str = "slot_cancellation_alert_v1"
+    WHATSAPP_SLOT_TEMPLATE_NAME: str = "slot_cancellation_alert_v2"
     WHATSAPP_SLOT_TEMPLATE_LANG: str = "he"
     WHATSAPP_MAX_RETRIES: int = 3
     WHATSAPP_RETRY_BACKOFF_FACTOR: float = 0.5

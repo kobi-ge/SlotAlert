@@ -13,6 +13,7 @@ from src.services.messaging.whatsapp.client import (
 )
 from src.services.messaging.whatsapp.templates import (
     build_slot_alert_template_payload,
+    clean_claim_token,
 )
 from src.utils.phone import (
     clean_e164_whatsapp,
@@ -49,55 +50,66 @@ def test_phone_sanitization_and_matching():
         clean_e164_whatsapp("abcdefghij")  # Non-digits
 
 
-def test_quick_reply_template_payload_structure():
-    """Verify template payload strictly uses pure QUICK_REPLY buttons."""
+def test_url_button_template_payload_structure():
+    """Verify template payload uses 4 body parameters and 1 URL CTA button."""
     payload = build_slot_alert_template_payload(
         to_phone="972501234567",
-        customer_id=10,
         customer_name="ישראל ישראלי",
         business_name="מרפאת העיר",
+        slot_datetime_str="יום שישי בשעה 09:00",
         service_name="טיפול שיניים",
-        start_time_formatted="יום שישי בשעה 09:00",
-        slot_id=25,
-        template_name="slot_cancellation_alert_v1",
+        claim_token="claim_token_abc_123",
+        template_name="slot_cancellation_alert_v2",
         language_code="he",
     )
 
     assert payload["type"] == "template"
     template = payload["template"]
-    assert template["name"] == "slot_cancellation_alert_v1"
+    assert template["name"] == "slot_cancellation_alert_v2"
     assert template["language"]["code"] == "he"
 
     components = template["components"]
-    assert len(components) == 3
+    assert len(components) == 2
 
-    # Body component
+    # 1. Body component (strictly 4 parameters: customer, business, datetime, service)
     body_comp = components[0]
     assert body_comp["type"] == "body"
     assert len(body_comp["parameters"]) == 4
     assert body_comp["parameters"][0]["text"] == "ישראל ישראלי"
     assert body_comp["parameters"][1]["text"] == "מרפאת העיר"
-    assert body_comp["parameters"][2]["text"] == "טיפול שיניים"
-    assert body_comp["parameters"][3]["text"] == "יום שישי בשעה 09:00"
+    assert body_comp["parameters"][2]["text"] == "יום שישי בשעה 09:00"
+    assert body_comp["parameters"][3]["text"] == "טיפול שיניים"
 
-    # Button 0: Quick Reply claim
+    # 2. Button component (sub_type: url, index: "0")
     btn0 = components[1]
     assert btn0["type"] == "button"
-    assert btn0["sub_type"] == "quick_reply"
-    assert btn0["index"] == 0
-    assert btn0["parameters"][0]["payload"] == "claim:25:10"
+    assert btn0["sub_type"] == "url"
+    assert btn0["index"] == "0"
+    assert len(btn0["parameters"]) == 1
+    assert btn0["parameters"][0]["type"] == "text"
+    assert btn0["parameters"][0]["text"] == "claim_token_abc_123"
 
-    # Button 1: Quick Reply optout
-    btn1 = components[2]
-    assert btn1["type"] == "button"
-    assert btn1["sub_type"] == "quick_reply"
-    assert btn1["index"] == 1
-    assert btn1["parameters"][0]["payload"] == "optout:10"
+
+def test_clean_claim_token():
+    """Verify clean_claim_token handles whitespace, leading slashes, and URL extraction."""
+    # Direct token cleaning
+    assert clean_claim_token("  token_123 \n ") == "token_123"
+    assert clean_claim_token("/token_456") == "token_456"
+    assert clean_claim_token("token with spaces") == "tokenwithspaces"
+
+    # Extraction from claim_url
+    assert clean_claim_token(claim_url="http://localhost:8000/api/v1/slots/99/claim") == "99"
+    assert clean_claim_token(claim_url="https://domain.com/claim/secure_tok_789") == "secure_tok_789"
+    assert clean_claim_token(claim_url="https://domain.com/claim/tok?ref=wa") == "tok?ref=wa"
+
+    # Fallback on empty
+    assert clean_claim_token("") == "claim"
+    assert clean_claim_token(None, None) == "claim"
 
 
 @pytest.mark.asyncio
 async def test_client_send_template_success():
-    """Verify WhatsAppCloudAPIClient sends template and extracts wamid."""
+    """Verify WhatsAppCloudAPIClient sends URL button template and extracts wamid."""
     client = WhatsAppCloudAPIClient(
         api_token="test_token",
         phone_number_id="123456789",
@@ -111,7 +123,7 @@ async def test_client_send_template_success():
         request=httpx.Request("POST", client.base_url),
     )
 
-    with patch.object(client._http_client, "post", new=AsyncMock(return_value=fake_response)):
+    with patch.object(client._http_client, "post", new=AsyncMock(return_value=fake_response)) as mock_post:
         wamid = await client.send_slot_alert(
             phone_number="050-123-4567",
             customer_name="שרה לוי",
@@ -121,6 +133,36 @@ async def test_client_send_template_success():
             claim_url="http://localhost:8000/api/v1/slots/99/claim",
         )
         assert wamid == "wamid.HBgMOTE1MjE3MDQ1FQIAERgSRjQ1Q0IzOTg4OAA="
+
+        # Verify dispatched payload structure conforms to URL CTA button requirements
+        mock_post.assert_called_once()
+        sent_payload = mock_post.call_args.kwargs["json"]
+        assert sent_payload["messaging_product"] == "whatsapp"
+        assert sent_payload["to"] == "972501234567"
+        assert sent_payload["type"] == "template"
+
+        tpl = sent_payload["template"]
+        assert tpl["name"] == "slot_cancellation_alert_v2"
+        assert tpl["language"]["code"] == "he"
+
+        components = tpl["components"]
+        assert len(components) == 2
+
+        # 4 body parameters
+        body = components[0]
+        assert body["type"] == "body"
+        assert len(body["parameters"]) == 4
+        assert body["parameters"][0]["text"] == "שרה לוי"
+        assert body["parameters"][1]["text"] == "קליניקת יופי"
+        assert body["parameters"][2]["text"] == "היום 16:00"
+        assert body["parameters"][3]["text"] == "מניקור"
+
+        # URL CTA button component
+        btn = components[1]
+        assert btn["type"] == "button"
+        assert btn["sub_type"] == "url"
+        assert btn["index"] == "0"
+        assert btn["parameters"][0]["text"] == "99"
 
     await client.close()
 

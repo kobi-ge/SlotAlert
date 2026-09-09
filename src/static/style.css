@@ -31,9 +31,10 @@ body {
   color: var(--text-main);
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  padding: 16px;
+  padding: 24px 16px 0;
 }
 
 .container {
@@ -47,6 +48,7 @@ body {
   padding: 28px 24px;
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
   animation: fadeIn 0.4s ease-out;
+  margin: auto 0;
 }
 
 @keyframes fadeIn {
@@ -395,5 +397,85 @@ body {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-3px); }
   75% { transform: translateX(3px); }
+}
+
+/* ==========================================================================
+   Sticky Footer Component
+   ========================================================================== */
+.site-footer {
+  width: 100%;
+  margin-top: auto;
+  padding: 20px 16px 16px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.site-footer .footer-container {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-footer .footer-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.site-footer .footer-contact-label {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.site-footer .footer-email-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #38bdf8;
+  text-decoration: none;
+  direction: ltr;
+  font-weight: 600;
+  font-size: 0.84rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.site-footer .footer-email-link:hover,
+.site-footer .footer-email-link:focus-visible {
+  color: #7dd3fc;
+  background: rgba(56, 189, 248, 0.16);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+  outline: none;
+}
+
+.site-footer .footer-email-link:active {
+  transform: translateY(0);
+}
+
+.site-footer .footer-mail-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  vertical-align: middle;
+}
+
+.site-footer .footer-email-link:hover .footer-mail-icon {
+  transform: scale(1.12);
+}
+
+.site-footer .footer-copyright {
+  color: #64748b;
+  font-size: 0.78rem;
+  direction: ltr;
 }
 

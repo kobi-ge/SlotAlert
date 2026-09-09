@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any, Optional
 
 
 class BaseMessageProvider(ABC):
@@ -12,8 +13,10 @@ class BaseMessageProvider(ABC):
         business_name: str,
         service_name: str,
         start_time_formatted: str,
-        claim_url: str,
-        price: object = None,
+        claim_url: str = "",
+        price: Optional[object] = None,
+        claim_token: Optional[str] = None,
+        **kwargs: Any,
     ) -> str:
         """
         Dispatch a last-minute slot cancellation alert message to a customer.

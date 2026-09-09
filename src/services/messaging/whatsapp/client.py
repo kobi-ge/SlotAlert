@@ -8,6 +8,7 @@ from src.config.settings import get_settings
 from src.services.messaging.base import BaseMessageProvider
 from src.services.messaging.whatsapp.templates import (
     build_slot_alert_template_payload,
+    clean_claim_token,
 )
 from src.utils.phone import clean_e164_whatsapp
 
@@ -220,38 +221,41 @@ class WhatsAppCloudAPIClient(BaseMessageProvider):
         business_name: str,
         service_name: str,
         start_time_formatted: str,
-        claim_url: str,
+        claim_url: str = "",
         price: Optional[object] = None,
+        claim_token: Optional[str] = None,
+        slot_datetime_str: Optional[str] = None,
+        template_name: Optional[str] = None,
+        language_code: Optional[str] = None,
+        **kwargs: Any,
     ) -> str:
         """
-        Send WhatsApp cancellation alert using pre-approved template with pure QUICK_REPLY buttons.
+        Send WhatsApp cancellation alert using pre-approved template with Call-to-Action (URL) button.
         """
         clean_phone = clean_e164_whatsapp(phone_number)
-
-        # Extract slot_id and customer_id
-        slot_id = 0
-        customer_id = 0
-        try:
-            parts = claim_url.rstrip("/").split("/")
-            if "slots" in parts:
-                slot_id_idx = parts.index("slots") + 1
-                slot_id = int(parts[slot_id_idx])
-        except Exception:
-            pass
+        datetime_display = slot_datetime_str or start_time_formatted
+        resolved_token = clean_claim_token(claim_token=claim_token, claim_url=claim_url)
+        tpl_name = template_name or settings.WHATSAPP_SLOT_TEMPLATE_NAME
+        tpl_lang = language_code or settings.WHATSAPP_SLOT_TEMPLATE_LANG
 
         payload = build_slot_alert_template_payload(
             to_phone=clean_phone,
-            customer_id=customer_id,
             customer_name=customer_name,
             business_name=business_name,
+            slot_datetime_str=datetime_display,
             service_name=service_name,
-            start_time_formatted=start_time_formatted,
-            slot_id=slot_id,
-            template_name=settings.WHATSAPP_SLOT_TEMPLATE_NAME,
-            language_code=settings.WHATSAPP_SLOT_TEMPLATE_LANG,
+            claim_token=resolved_token,
+            template_name=tpl_name,
+            language_code=tpl_lang,
+            start_time_formatted=datetime_display,
+            claim_url=claim_url,
+            **kwargs,
         )
 
-        logger.info(f"Sending WhatsApp slot alert template to {clean_phone} for slot {slot_id}")
+        logger.info(
+            f"Sending WhatsApp slot alert CTA template '{tpl_name}' to {clean_phone} "
+            f"(token: {resolved_token})"
+        )
         data = await self._post_with_retry(payload)
         messages = data.get("messages", [])
         if messages:

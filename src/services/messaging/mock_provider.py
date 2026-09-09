@@ -2,7 +2,7 @@ import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.services.messaging.base import BaseMessageProvider
 
@@ -37,8 +37,10 @@ class MockMessageProvider(BaseMessageProvider):
         business_name: str,
         service_name: str,
         start_time_formatted: str,
-        claim_url: str,
+        claim_url: str = "",
         price: Optional[object] = None,
+        claim_token: Optional[str] = None,
+        **kwargs: Any,
     ) -> str:
         """Simulate sending a WhatsApp slot alert message."""
         message_sid = f"mock_msg_{uuid.uuid4().hex[:12]}"

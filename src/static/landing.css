@@ -36,6 +36,8 @@ body {
   font-family: var(--font-family);
   direction: rtl;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   line-height: 1.6;
   overflow-x: hidden;
   background-image: 
@@ -663,13 +665,101 @@ body {
   transition: transform 0.2s ease;
 }
 
-/* Footer */
+/* Sticky Footer */
+.site-footer,
 .footer {
+  margin-top: auto;
   border-top: 1px solid var(--border-color);
-  padding: 40px 0;
-  text-align: center;
+  background: rgba(9, 13, 22, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 32px 0;
   color: var(--text-muted);
   font-size: 0.88rem;
+  width: 100%;
+}
+
+.site-footer .footer-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.site-footer .footer-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.site-footer .footer-contact-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.site-footer .footer-email-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent-green-light);
+  text-decoration: none;
+  direction: ltr;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 5px 12px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.site-footer .footer-email-link:hover,
+.site-footer .footer-email-link:focus-visible {
+  color: #a7f3d0;
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.45);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2);
+  outline: none;
+}
+
+.site-footer .footer-email-link:active {
+  transform: translateY(0);
+}
+
+.site-footer .footer-mail-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  vertical-align: middle;
+}
+
+.site-footer .footer-email-link:hover .footer-mail-icon {
+  transform: scale(1.12);
+}
+
+.site-footer .footer-copyright {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  direction: ltr;
+}
+
+@media (max-width: 640px) {
+  .site-footer,
+  .footer {
+    padding: 24px 0;
+  }
+  .site-footer .footer-container {
+    flex-direction: column;
+    text-align: center;
+    justify-content: center;
+    gap: 14px;
+  }
+  .site-footer .footer-contact {
+    justify-content: center;
+  }
 }
 
 /* Responsive */
