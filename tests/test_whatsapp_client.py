@@ -59,13 +59,13 @@ def test_url_button_template_payload_structure():
         slot_datetime_str="יום שישי בשעה 09:00",
         service_name="טיפול שיניים",
         claim_token="claim_token_abc_123",
-        template_name="slot_cancellation_alert_v2",
+        template_name="slot_cancellation_alert_v1",
         language_code="he",
     )
 
     assert payload["type"] == "template"
     template = payload["template"]
-    assert template["name"] == "slot_cancellation_alert_v2"
+    assert template["name"] == "slot_cancellation_alert_v1"
     assert template["language"]["code"] == "he"
 
     components = template["components"]
@@ -142,7 +142,7 @@ async def test_client_send_template_success():
         assert sent_payload["type"] == "template"
 
         tpl = sent_payload["template"]
-        assert tpl["name"] == "slot_cancellation_alert_v2"
+        assert tpl["name"] == "slot_cancellation_alert_v1"
         assert tpl["language"]["code"] == "he"
 
         components = tpl["components"]

@@ -95,9 +95,11 @@ async def execute_slot_broadcast(
             nonlocal sent_count, failed_count
             async with semaphore:
                 try:
+                    # Extract customer first name for personalized friendly greeting (e.g. 'ישראל' from 'ישראל ישראלי')
+                    first_name = (customer.full_name or "").strip().split()[0] if customer.full_name else "לקוח/ה"
                     sid = await provider.send_slot_alert(
                         phone_number=customer.phone_number,
-                        customer_name=customer.full_name,
+                        customer_name=first_name,
                         business_name=slot.business.name,
                         service_name=slot.effective_service_name,
                         start_time_formatted=start_time_str,
